@@ -53,10 +53,11 @@ function answersParsing(doc = document) {
 
           item.querySelectorAll('strong').forEach((aItem) => {
             if (aItem) {
-              // убрать 1) и + в конце
               answers.push(aItem.textContent
+                // убрать 1) и + в конце и кавычки в начале и в конце
+                .replaceAll(/^"/g, '')
                 .replaceAll(/^\d+\) /g, '')
-                .replaceAll(/[\.\;\+]+$/g, '')
+                .replaceAll(/[\.\;\+"]+$/g, '')
               )
             }
           })
