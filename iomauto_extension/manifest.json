@@ -21,8 +21,8 @@
   },
 
   "host_permissions": [
-    "https://iom-vo.edu.rosminzdrav.ru/*",
-    "https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/*",
+    "https://*.edu.rosminzdrav.ru/*",
+    "https://*.edu.rosminzdrav.ru/quiz-wrapper/*",
     "https://24forcare.com/*"
   ],
   "content_scripts": [
@@ -31,12 +31,12 @@
         "./src/constants.js",
         "./src/inject/content-script.js"
       ],
-      "matches": ["https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/*"],
+      "matches": ["https://*.edu.rosminzdrav.ru/quiz-wrapper/*"],
       "run_at": "document_idle"
     },
     {
       "css": ["./src/inject/content-script.css"],
-      "matches": ["https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/*"]
+      "matches": ["https://*.edu.rosminzdrav.ru/quiz-wrapper/*"]
     }
   ],
 
