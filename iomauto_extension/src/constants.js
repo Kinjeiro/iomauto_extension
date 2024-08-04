@@ -3,6 +3,7 @@ const COMMANDS = {
 }
 
 const MODULE_STATUS = {
+  START_SERVICE: 'START_SERVICE',
   NEW: 'NEW',
   SEARCHING: 'SEARCH',
   READY: 'READY',

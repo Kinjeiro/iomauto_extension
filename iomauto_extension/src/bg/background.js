@@ -21,6 +21,7 @@ async function getCurrentTab() {
 
 
 export const MODULE_STATUS = {
+  START_SERVICE: 'START_SERVICE',
   NEW: 'NEW',
   SEARCHING: 'SEARCH',
   READY: 'READY',
@@ -29,6 +30,7 @@ export const MODULE_STATUS = {
   ERROR: 'ERROR',
 }
 export const MODULE_STATUS_TEXT_MAP = {
+  [MODULE_STATUS.START_SERVICE]: [null],
   [MODULE_STATUS.NEW]: ['*', '#ffd200', 'Ожидаю запуска теста'],
   [MODULE_STATUS.SEARCHING]: ['...', '#ffd200', 'Поиск ответов в интернете...'],
   [MODULE_STATUS.READY]: ['>', '#00ff07', 'Ответы найдены - нажмите для запуска!'],
@@ -43,9 +45,66 @@ console.log('Start background script')
 // STORAGE
 // ======================================================
 chrome.storage?.sync?.set({
-  moduleStatus: undefined,
+  moduleStatus: MODULE_STATUS.START_SERVICE,
   error: undefined,
 })
+
+// ======================================================
+// STORAGE CHANGED
+// ======================================================
+async function updateBadge(moduleStatusValue, error) {
+  const tab = (await getCurrentTab())
+
+  if (!tab) {
+    return
+  }
+
+  const tabId = tab.id
+  const [
+    text,
+    bgColor,
+    title,
+  ] = MODULE_STATUS_TEXT_MAP[moduleStatusValue]
+
+  chrome.action.setBadgeText({ text, tabId })
+
+  // chrome.action.setBadgeBackgroundColor({ color: bgColor || null, tabId })
+  chrome.action.getBadgeBackgroundColor({
+    tabId,
+  }, (result) => {
+    if (result || !!bgColor) {
+      // нельзя ставить null если цвета не было
+      chrome.action.setBadgeBackgroundColor({ color: bgColor || null, tabId })
+    }
+  })
+
+  chrome.action.getTitle({
+    tabId,
+  }, (result) => {
+    if (result || !!title) {
+      // нельзя ставить null если текста не было
+      chrome.action.setTitle({
+        title: moduleStatusValue === MODULE_STATUS.ERROR
+          ? `${title}: ${error}`
+          : title,
+        tabId,
+      })
+    }
+  })
+}
+
+// async function initBadge() {
+//   const {
+//     moduleStatus,
+//   } = await chrome.storage.sync.get()
+//
+//   console.log('ANKU init status', moduleStatus)
+//   if (moduleStatus) {
+//     await updateBadge(moduleStatus)
+//   }
+// }
+// initBadge()
+
 
 // ======================================================
 // BADGE CLICKED
@@ -76,39 +135,6 @@ chrome.action.onClicked.addListener((tab) => {
   })
 })
 
-
-// ======================================================
-// STORAGE CHANGED
-// ======================================================
-async function updateBadge(moduleStatusValue, error) {
-  const tabId = (await getCurrentTab()).id
-  const [
-    text,
-    bgColor,
-    title,
-  ] = MODULE_STATUS_TEXT_MAP[moduleStatusValue]
-
-  chrome.action.setBadgeText({ text, tabId })
-  chrome.action.setBadgeBackgroundColor({ color: bgColor || null, tabId })
-  chrome.action.setTitle({
-    title: moduleStatusValue === MODULE_STATUS.ERROR
-      ? `${title}: ${error}`
-      : title,
-    tabId,
-  })
-}
-
-// async function initBadge() {
-//   const {
-//     moduleStatus,
-//   } = await chrome.storage.sync.get()
-//
-//   console.log('ANKU init status', moduleStatus)
-//   if (moduleStatus) {
-//     await updateBadge(moduleStatus)
-//   }
-// }
-// initBadge()
 
 chrome.storage.sync.onChanged.addListener(async (changes) => {
   console.log('changed: ', changes)

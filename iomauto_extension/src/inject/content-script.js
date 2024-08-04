@@ -409,7 +409,7 @@ window.onload = function() {
   setTimeout(() => {
     if (chrome.runtime?.id && chrome.storage?.sync) {
       chrome.storage.sync.set({
-        moduleStatus: MODULE_STATUS.NEW,
+        moduleStatus: MODULE_STATUS.START_SERVICE,
         error: undefined,
       })
     }
@@ -425,7 +425,8 @@ window.onbeforeunload = function() {
   if (chrome.runtime?.id) {
     chrome.storage.sync.set({
       // moduleStatus: MODULE_STATUS.NEW,
-      moduleStatus: undefined,
+      moduleStatus: MODULE_STATUS.START_SERVICE,
+      error: undefined,
     })
   }
   return false
@@ -433,9 +434,9 @@ window.onbeforeunload = function() {
 
 async function searchStart(linkToAnswers = undefined) {
   try {
-    // chrome.storage.sync.set({
-    //   moduleStatus: MODULE_STATUS.NEW,
-    // })
+    chrome.storage.sync.set({
+      moduleStatus: MODULE_STATUS.NEW,
+    })
     log('Поиска заголовка с названием темы...')
     const certName = await searchByCertName()
 
