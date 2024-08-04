@@ -1,0 +1,67 @@
+{
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "host_permissions": [
+    "https://iomqt-vo.edu.rosminzdrav.ru/*"
+  ],
+
+
+  "action": {
+    "default_popup": "html/popup.html",
+    "default_icon": "icons/icon-32.png"
+  },
+
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+
+
+
+  "background": {
+    "page": "src/bg/background.html",
+    "persistent": true
+  },
+
+  "options_page": "src/options/index.html",
+
+  "browser_action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "24": "images/icon24.png",
+      "32": "images/icon32.png"
+    },
+    "default_title": "Google Mail",
+    "default_popup": "popup.html"
+  },
+
+  "content_scripts": [
+    {
+      "js": ["src/inject/content-script.js"],
+      "matches": ["https://iomqt-vo.edu.rosminzdrav.ru/*"],
+      "all_frames": false,
+      "run_at": "document_idle"
+    },
+    {
+      "css": ["src/inject/content-script.css"],
+      "matches": ["https://iomqt-vo.edu.rosminzdrav.ru/*"]
+    }
+  ],
+
+  "commands": {
+    "pin-current-tab": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Up",
+        "mac": "Command+Shift+Up"
+      },
+      "description": "Закрепить/открепить текущую вкладку"
+    }
+  },
+
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting",
+    "storage",
+    "alarms",
+    "notifications"
+  ]
+}

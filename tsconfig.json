@@ -1,0 +1,11 @@
+{
+  "types": [
+    // (various types, e.g. jquery, core-js),
+    "chrome",
+    "chrome-types"
+  ],
+
+  "compilerOptions": {
+    "types": ["chrome", "chrome-types"],
+  }
+}

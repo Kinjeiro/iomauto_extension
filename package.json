@@ -1,0 +1,7 @@
+{
+  "name": "iomauto_extension",
+  "version": "0.1.4",
+  "repository": "git@github.com:Kinjeiro/iomauto_extension.git",
+  "author": "Andrey Kuzmin <kinjeiro@gmail.com>",
+  "license": "MIT"
+}

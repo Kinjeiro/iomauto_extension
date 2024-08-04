@@ -1,0 +1,47 @@
+{
+  "name": "Автоматическое решение Интерактивных Образовательных Модулей (ИОМ)",
+  "short_name": "iomauto",
+  "version": "0.1.4",
+  "manifest_version": 3,
+  "description": "Автоматическое решение Интерактивных Образовательных Модулей (ИОМ) для системы сертификации.",
+  "homepage_url": "https://t.me/iomauto",
+  "icons": {
+    "16": "./images/icon16.png",
+    "48": "./images/icon48.png",
+    "128": "./images/icon128.png"
+  },
+
+  "default_locale": "en",
+
+  "permissions": [
+    "storage"
+  ],
+
+  "action": {
+  },
+
+  "host_permissions": [
+    "https://iom-vo.edu.rosminzdrav.ru/*",
+    "https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/*",
+    "https://24forcare.com/*"
+  ],
+  "content_scripts": [
+    {
+      "js": [
+        "./src/constants.js",
+        "./src/inject/content-script.js"
+      ],
+      "matches": ["https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/*"],
+      "run_at": "document_idle"
+    },
+    {
+      "css": ["./src/inject/content-script.css"],
+      "matches": ["https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/*"]
+    }
+  ],
+
+  "background": {
+    "service_worker": "./src/bg/background.js",
+    "type": "module"
+  }
+}
