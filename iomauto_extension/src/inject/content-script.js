@@ -123,38 +123,60 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
 
   let linkToAnswersFinal = linkToAnswers
   if (!linkToAnswersFinal) {
-    console.log('Поиск...')
-
     // const htmlWithSearch = await (await fetch(DEFAULT_URL + 'search/?' + new URLSearchParams({
     //   query: certName,
     //   // credentials: "include"
     // }).toString())).text()
 
-    // todo @ANKU @LOW - может вообще обрезать по длине чтобы лучше искалось
-    // убираем год - так как часто 2021 в базе ответов нет
-    const certNameFinal = certName.replaceAll(/\s?-?\s?\d{4}$/gi, '')
-    const htmlWithSearch = await fetchFromExtension(DEFAULT_URL + 'search/?' + new URLSearchParams({
-      query: certNameFinal,
-      // credentials: "include"
-    }).toString())
-    const parserSearch = new DOMParser();
-    const docSearch = parserSearch.parseFromString(htmlWithSearch, 'text/html');
+    const testSearchMatches = [
+      // todo @ANKU @LOW - может вообще обрезать по длине чтобы лучше искалось
+      // убираем год - так как часто 2021 в базе ответов нет
+      // -2021
+      (searchTerm) => searchTerm.replaceAll(/\s?-?\s?\d{4}$/gi, ''),
 
-    // todo @ANKU @CRIT @MAIN - todo несколько вариантов ответов
-    // const anchor = docSearch.querySelector(
-    //   '#pdopage > .rows > * > .item > .item-name')
+      // Недержание мочи (по утвержденным клиническим рекомендациям)-2020
+      // Недержание мочи (по клиническим рекомендациям)
+      (searchTerm, prevTerm) => prevTerm.replaceAll(
+        'по утвержденным клиническим рекомендациям',
+        'по клиническим рекомендациям',
+      ),
+    ]
 
-    const anchors = docSearch.querySelectorAll('.item-name')
-    let foundLinks = []
-    console.log('Найдены темы в базе данных:')
-    anchors.forEach((findLink, index) => {
-      const linkTitle = findLink.getAttribute('title').trim()
-      console.log((index + 1) + ') ' + linkTitle)
-      if (linkTitle.indexOf(certNameFinal) >= 0) {
-        foundLinks.push(findLink)
-      }
-    })
-    const anchor = foundLinks[0]
+    let anchor
+    let prevSearch = certName
+
+    for (let i = 0; !anchor && i < testSearchMatches.length; i++) {
+      const matcher = testSearchMatches[i]
+
+      const certNameFinal = matcher(certName, prevSearch)
+
+      console.log('Поиск...\n', certNameFinal)
+      const htmlWithSearch = await fetchFromExtension(DEFAULT_URL + 'search/?' + new URLSearchParams({
+        query: certNameFinal,
+        // credentials: "include"
+      }).toString())
+      const parserSearch = new DOMParser();
+      const docSearch = parserSearch.parseFromString(htmlWithSearch, 'text/html');
+
+      // todo @ANKU @CRIT @MAIN - todo несколько вариантов ответов
+      // const anchor = docSearch.querySelector(
+      //   '#pdopage > .rows > * > .item > .item-name')
+
+      const anchors = docSearch.querySelectorAll('.item-name')
+      let foundLinks = []
+      console.log('Найдены темы в базе данных:')
+      anchors.forEach((findLink, index) => {
+        const linkTitle = findLink.getAttribute('title').trim()
+        console.log((index + 1) + ') ' + linkTitle)
+
+        // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
+        if (linkTitle.indexOf(certNameFinal) >= 0) {
+          foundLinks.push(findLink)
+        }
+      })
+      anchor = foundLinks[0]
+      prevSearch = certNameFinal
+    }
 
     if (!anchor) {
       throw new Error('Не найдены ответы в базе данных на данную тему')
@@ -192,6 +214,7 @@ function startExecute(mapResult) {
     // return pageStr.indexOf(inputDataStr) >= 0
 
     // return pageStr.replaceAll(/[\.\;\+]+$/g, '') === inputDataStr
+    // нормализация
     return pageStr.replaceAll(/[, \.\;\)\+]/g, '') === inputDataStr.replaceAll(/[, \.\;\)\+]/g, '')
   }
 
