@@ -73,10 +73,19 @@ function answersParsing(doc = document) {
 
           // одинаковые вопросы есть с разными вариантами
           // mapResult[question] = answers
-          mapResult[question] = [
-            ...(mapResult[question] || []),
-            ...answers
-          ]
+
+          if (!mapResult[question]) {
+            mapResult[question] = []
+          }
+          /*
+            В ответах сразу два одинаковых вопроса, просто варианты выбора разные.
+            Сделай multiple решение:
+            [
+               ["ответ 1", "ответ 2"],
+               ["ответ 4"],
+            ]
+          */
+          mapResult[question].push(answers)
         }
       })
   }
@@ -268,44 +277,14 @@ function startExecute(mapResult) {
         let randomPageAnswers = []
 
         let hasAnyAnswer = false
-        findAnswers.forEach((answer) => {
-          // нужно каждый раз искать, так как форма обновляется после проставление ответа
-          const answersEls = document.querySelectorAll('mat-checkbox')
-          if (answersEls.length > 0) {
-            // НЕСКОЛЬКО ОТВЕТОВ
-            randomPageAnswers = [
-              answersEls[0]?.querySelector('span'),
-              answersEls[1]?.querySelector('span')
-            ]
-            answersEls.forEach((checkboxEl) => {
-              const isChecked = checkboxEl.className.indexOf('mat-mdc-checkbox-checked') >= 0
-              const checboxSpanEl = checkboxEl.querySelector('span')
-              if (isChecked) {
-                hasAnyAnswer = true
-              } else if (compare(answer, checboxSpanEl.textContent)) {
-                hasAnyAnswer = true
-                checboxSpanEl.click()
-              }
-            })
-          } else {
-            // ОДИН ОТВЕТ
-            const radioEls = document.querySelectorAll('mat-radio-button')
-            randomPageAnswers = radioEls[0] ? [
-              radioEls[0]?.querySelector('span'),
-            ] : []
-            radioEls.forEach((radioEl) => {
-              const isChecked = radioEl.className.indexOf('mat-mdc-radio-checked') >= 0
-              const checboxSpanEl = radioEl.querySelector('span')
-              if (isChecked) {
-                hasAnyAnswer = true
-              } else if (compare(answer, checboxSpanEl.textContent)) {
-                hasAnyAnswer = true
-                checboxSpanEl.click()
-              }
-            })
-          }
-        })
-
+        /*
+          В ответах сразу два одинаковых вопроса, просто варианты выбора разные.
+          Сделали multiple решение - массив массивов:
+          [
+             ["ответ 1", "ответ 2"],
+             ["ответ 4"],
+          ]
+        */
         // todo @ANKU @LOW - на сайте нету болдов с ответами, поэтому делаем хак просто оставляем без ответа
         if (findAnswers.length === 0) {
           logError(
@@ -313,7 +292,55 @@ function startExecute(mapResult) {
             foundKey,
           )
           hasAnyAnswer = true
+        } else {
+          findAnswers.some((answersVariant, variantIndex) => {
+            answersVariant.forEach((answer) => {
+              // нужно каждый раз искать, так как форма обновляется после проставление ответа
+              const answersEls = document.querySelectorAll('mat-checkbox')
+              if (answersEls.length > 0) {
+                // НЕСКОЛЬКО ОТВЕТОВ
+                randomPageAnswers = [
+                  answersEls[0]?.querySelector('span'),
+                  answersEls[1]?.querySelector('span')
+                ]
+                answersEls.forEach((checkboxEl) => {
+                  const isChecked = checkboxEl.className.indexOf('mat-mdc-checkbox-checked') >= 0
+                  const checboxSpanEl = checkboxEl.querySelector('span')
+                  if (isChecked) {
+                    hasAnyAnswer = true
+                  } else if (compare(answer, checboxSpanEl.textContent)) {
+                    hasAnyAnswer = true
+                    checboxSpanEl.click()
+                  }
+                })
+              } else {
+                // ОДИН ОТВЕТ
+                const radioEls = document.querySelectorAll('mat-radio-button')
+                randomPageAnswers = radioEls[0] ? [
+                  radioEls[0]?.querySelector('span'),
+                ] : []
+                radioEls.forEach((radioEl) => {
+                  const isChecked = radioEl.className.indexOf('mat-mdc-radio-checked') >= 0
+                  const checboxSpanEl = radioEl.querySelector('span')
+                  if (isChecked) {
+                    hasAnyAnswer = true
+                  } else if (compare(answer, checboxSpanEl.textContent)) {
+                    hasAnyAnswer = true
+                    checboxSpanEl.click()
+                  }
+                })
+              }
+            })
+
+            if (hasAnyAnswer) {
+              // если нашли ответы прекращаем вариантов блоков ответов перебирать
+              return true
+            } else if (variantIndex < findAnswers.length - 1) {
+              log('Пробуем подставить другой блок ответов:\n', findAnswers[variantIndex + 1])
+            }
+          })
         }
+
 
         // todo @ANKU @LOW - добавить варнинг икоку
         // todo @ANKU @LOW - @hack - делаем хак, что если не найдены ответы, выберем первый вариант, чтобы продолжить
