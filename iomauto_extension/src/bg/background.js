@@ -24,15 +24,17 @@ export const MODULE_STATUS = {
   START_SERVICE: 'START_SERVICE',
   NEW: 'NEW',
   SEARCHING: 'SEARCH',
+  WAIT_QA_FORM: 'WAIT_QA_FORM',
   READY: 'READY',
   EXECUTING: 'EXECUTION',
   DONE: 'DONE',
   ERROR: 'ERROR',
 }
 export const MODULE_STATUS_TEXT_MAP = {
-  [MODULE_STATUS.START_SERVICE]: [null],
+  [MODULE_STATUS.START_SERVICE]: ['*', '#ffd200', 'Ожидаю запуска теста'],
   [MODULE_STATUS.NEW]: ['*', '#ffd200', 'Ожидаю запуска теста'],
   [MODULE_STATUS.SEARCHING]: ['...', '#ffd200', 'Поиск ответов в интернете...'],
+  [MODULE_STATUS.WAIT_QA_FORM]: ['...', '#ffd200', 'Ожидаю формы вопросов'],
   [MODULE_STATUS.READY]: ['>', '#00ff07', 'Ответы найдены - нажмите для запуска!'],
   [MODULE_STATUS.EXECUTING]: ['>...', '#ffd200', 'Подстановка ответов...'],
   [MODULE_STATUS.DONE]: ['DONE', '#165af3', 'Все подставлено!'],

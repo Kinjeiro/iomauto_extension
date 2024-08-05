@@ -373,8 +373,22 @@ function startExecute(mapResult) {
   //checkAnwser()
 }
 
-let searchStartIntervalId
-let finalMapResult
+// function runManual() {
+//   startExecute(finalMapResult)
+// }
+//
+// async function run(linkToAnswers = undefined) {
+//   await searchByCertName(linkToAnswers)
+//   runManual()
+// }
+
+// run()
+// run('link')
+
+
+
+
+
 async function searchByCertName(linkToAnswers = undefined) {
   // pc - mat-card-title - mat-mdc-card-title mat-card-title-quiz-custom
   const titleEl = document.querySelector('mat-panel-title')
@@ -398,19 +412,34 @@ async function searchByCertName(linkToAnswers = undefined) {
   }
 }
 
-// function runManual() {
-//   startExecute(finalMapResult)
-// }
-//
-// async function run(linkToAnswers = undefined) {
-//   await searchByCertName(linkToAnswers)
-//   runManual()
-// }
 
-// run()
-// run('link')
+let intervalRunSearchQAForm
+async function runSearchQAForm() {
+  const hasQAs = document.querySelector('#questionAnchor')
 
+  if (hasQAs) {
+    clearInterval(intervalRunSearchQAForm)
 
+    chrome.storage.sync.set({
+      moduleStatus: MODULE_STATUS.READY,
+    })
+  }
+}
+
+let intervalRunSearchAnswers
+let finalMapResult
+async function runSearchAnswers() {
+  const certName = await searchByCertName()
+  if (certName) {
+    clearInterval(intervalRunSearchAnswers)
+
+    finalMapResult = await searchAnswers(certName)
+
+    chrome.storage.sync.set({
+      moduleStatus: MODULE_STATUS.WAIT_QA_FORM,
+    })
+  }
+}
 
 window.onload = function() {
   // можно также использовать window.addEventListener('load', (event) => {
@@ -419,10 +448,18 @@ window.onload = function() {
   // is lazy inited and might return undefined
   setTimeout(() => {
     if (chrome.runtime?.id && chrome.storage?.sync) {
+      // сначала нужно сбросить background статус
       chrome.storage.sync.set({
         moduleStatus: MODULE_STATUS.START_SERVICE,
         error: undefined,
       })
+
+      setTimeout(() => {
+        chrome.storage.sync.set({
+          moduleStatus: MODULE_STATUS.NEW,
+          error: undefined,
+        })
+      }, 500)
     }
   }, 1000)
 }
@@ -443,46 +480,39 @@ window.onbeforeunload = function() {
   return false
 }
 
-async function searchStart(linkToAnswers = undefined) {
+
+chrome.storage.sync.onChanged.addListener(async (changes) => {
   try {
-    chrome.storage.sync.set({
-      moduleStatus: MODULE_STATUS.NEW,
-    })
-    log('Поиска заголовка с названием темы...')
-    const certName = await searchByCertName()
+    console.log('cs: changed: ', changes)
 
-    const hasQAs = document.querySelector('#questionAnchor')
+    switch (changes?.moduleStatus?.newValue) {
+      case MODULE_STATUS.NEW:
+        log('Поиска заголовка с названием темы...')
+        chrome.storage.sync.set({
+          moduleStatus: MODULE_STATUS.SEARCHING,
+        })
+        intervalRunSearchAnswers = setInterval(runSearchAnswers, 1000)
+        break
 
-    if (certName && hasQAs) {
-      clearInterval(searchStartIntervalId)
-      chrome.storage.sync.set({
-        moduleStatus: MODULE_STATUS.SEARCHING,
-      })
+      case MODULE_STATUS.WAIT_QA_FORM:
+        log('Ожидание блока с вопросом и ответами...')
+        intervalRunSearchQAForm = setInterval(runSearchQAForm, 1000)
+        break
 
-      finalMapResult = await searchAnswers(certName, linkToAnswers)
-
-      chrome.storage.sync.set({
-        moduleStatus: MODULE_STATUS.READY,
-      })
+      case MODULE_STATUS.EXECUTING:
+        log('Подстановка значений...')
+        startExecute(finalMapResult)
+        break
     }
-    // startExecute(answersMap)
   } catch (e) {
-    clearInterval(searchStartIntervalId)
+    clearInterval(intervalRunSearchAnswers)
+    clearInterval(intervalRunSearchQAForm)
+
     console.log('ОШИБКА ЗАПУСКА:\n', e)
     chrome.storage.sync.set({
       moduleStatus: MODULE_STATUS.ERROR,
       error: e.message,
     })
-  }
-}
-
-searchStartIntervalId = setInterval(searchStart, 1000)
-
-chrome.storage.sync.onChanged.addListener(async (changes) => {
-  console.log('cs: changed: ', changes)
-
-  if (changes?.moduleStatus?.newValue === MODULE_STATUS.EXECUTING) {
-    startExecute(finalMapResult)
   }
 })
 
