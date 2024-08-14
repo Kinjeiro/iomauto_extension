@@ -158,8 +158,9 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     //   query: certName,
     //   // credentials: "include"
     // }).toString())).text()
-    const anchorAll = []
-    const anchorAllTitles = []
+    const anchorAllMap = {}
+    // const anchorAll = []
+    // const anchorAllTitles = []
     let anchor
     let anchorIndex
     let prevSearch = certName
@@ -188,14 +189,20 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
         console.log('Найдены темы в базе данных:')
         anchors.forEach((findLink, index) => {
           const linkTitle = findLink.getAttribute('title').trim()
-          anchorAll.push(findLink)
-          anchorAllTitles.push(linkTitle)
-          console.log((index + 1) + ') ' + linkTitle)
+          // anchorAll.push(findLink)
+          // anchorAllTitles.push(linkTitle)
+          const hasAlreadyThisName = anchorAllMap[linkTitle]
+          if (!hasAlreadyThisName) {
+            // берем всегда первое полное совпадение, а то бывает 2 теста одинаково называются
+            // к примеру "Профилактика онкологических заболеваний"
+            anchorAllMap[linkTitle] = findLink
+            console.log((index + 1) + ') ' + linkTitle)
 
-          // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
-          if (linkTitle.indexOf(certNameFinal) >= 0) {
-            foundLinks.push(findLink)
-            anchorIndex = anchorAll.length
+            // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
+            if (linkTitle.indexOf(certNameFinal) >= 0) {
+              foundLinks.push(findLink)
+              anchorIndex = Object.keys(anchorAllMap).length
+            }
           }
         })
       } else {
@@ -222,6 +229,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     }
 
     // если было несколько вариантов или не найден
+    const anchorAllTitles = Object.keys(anchorAllMap)
     if (!anchor && anchorAllTitles.length) {
       const userChoice = prompt(
         anchorAllTitles
@@ -231,7 +239,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
       )
 
       if (userChoice) {
-        anchor = anchorAll[parseInt(userChoice, 10) - 1]
+        anchor = anchorAllMap[anchorAllTitles[parseInt(userChoice, 10) - 1]]
       }
     }
 
