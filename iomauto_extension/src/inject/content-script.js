@@ -263,6 +263,22 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
 
 
 
+function compareAnswer(inputDataStr, pageStr) {
+  // могут быть не заглавные, могут быть запятые лишние в конце
+  // поэтому обрежем в конце
+  // return inputDataStr.match(pageStr.substr(0, pageStr.length - 1))
+  // return inputDataStr.match(pageStr)
+  // return pageStr.indexOf(inputDataStr) >= 0
+
+  // return pageStr.replaceAll(/[\.\;\+]+$/g, '') === inputDataStr
+  // нормализация
+
+  // Была маленькая буква
+  // Профилактика онкологических заболеваний
+  // начинать скрининг при среднестатистическом риске рака толстой кишки необходимо с возраста
+  return pageStr.replaceAll(/[, \.\;\)\+]/g, '').toLocaleLowerCase() === inputDataStr.replaceAll(/[, \.\;\)\+]/g, '').toLowerCase()
+}
+
 function startExecute(mapResult) {
   // todo ограничение на 10000
   // const input =  window.prompt('JSON c ответами')
