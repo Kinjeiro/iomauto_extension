@@ -544,9 +544,29 @@ window.onbeforeunload = function() {
   return false
 }
 
+function errorWrapper(func) {
+  return async () => {
+    try {
+      return await func()
+    } catch (e) {
+      clearInterval(intervalRunSearchAnswers)
+      clearInterval(intervalRunSearchQAForm)
+
+      console.log('ОШИБКА ЗАПУСКА:\n', e)
+      chrome.storage.sync.set({
+        moduleStatus: MODULE_STATUS.ERROR,
+        // todo @ANKU @LOW - почему-то ошибка не обновляется proxy?
+        error: e.message,
+      })
+    }
+  }
+}
+
+const runSearchAnswersWrapper = errorWrapper(runSearchAnswers)
+const runSearchQAFormWrapper = errorWrapper(runSearchQAForm)
 
 chrome.storage.sync.onChanged.addListener(async (changes) => {
-  try {
+  await errorWrapper(() => {
     console.log('cs: changed: ', changes)
 
     switch (changes?.moduleStatus?.newValue) {
@@ -555,12 +575,12 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
         chrome.storage.sync.set({
           moduleStatus: MODULE_STATUS.SEARCHING,
         })
-        intervalRunSearchAnswers = setInterval(runSearchAnswers, 1000)
+        intervalRunSearchAnswers = setInterval(runSearchAnswersWrapper, 1000)
         break
 
       case MODULE_STATUS.WAIT_QA_FORM:
         log('Ожидание блока с вопросом и ответами...')
-        intervalRunSearchQAForm = setInterval(runSearchQAForm, 1000)
+        intervalRunSearchQAForm = setInterval(runSearchQAFormWrapper, 1000)
         break
 
       case MODULE_STATUS.EXECUTING:
@@ -568,16 +588,7 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
         startExecute(finalMapResult)
         break
     }
-  } catch (e) {
-    clearInterval(intervalRunSearchAnswers)
-    clearInterval(intervalRunSearchQAForm)
-
-    console.log('ОШИБКА ЗАПУСКА:\n', e)
-    chrome.storage.sync.set({
-      moduleStatus: MODULE_STATUS.ERROR,
-      error: e.message,
-    })
-  }
+  })()
 })
 
 // chrome.action.onClicked.addListener(async (tab) => {

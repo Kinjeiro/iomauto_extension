@@ -193,6 +193,8 @@ chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback)
       case 'searchAnswers': {
         searchAnswers(data).then((answersMap) => {
           callback(answersMap)
+        }, function (error) {
+          callback([null, error])
         })
       } break;
     }
