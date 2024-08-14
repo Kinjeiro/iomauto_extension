@@ -158,22 +158,10 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     //   query: certName,
     //   // credentials: "include"
     // }).toString())).text()
-
-    const testSearchMatches = [
-      // todo @ANKU @LOW - может вообще обрезать по длине чтобы лучше искалось
-      // убираем год - так как часто 2021 в базе ответов нет
-      // -2021
-      (searchTerm) => searchTerm.replaceAll(/\s?-?\s?\d{4}$/gi, ''),
-
-      // Недержание мочи (по утвержденным клиническим рекомендациям)-2020
-      // Недержание мочи (по клиническим рекомендациям)
-      (searchTerm, prevTerm) => prevTerm.replaceAll(
-        'по утвержденным клиническим рекомендациям',
-        'по клиническим рекомендациям',
-      ),
-    ]
-
+    const anchorAll = []
+    const anchorAllTitles = []
     let anchor
+    let anchorIndex
     let prevSearch = certName
 
     for (let i = 0; !anchor && i < SEARCH_MATCHES.length; i++) {
@@ -195,16 +183,25 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
 
       const anchors = docSearch.querySelectorAll('.item-name')
       let foundLinks = []
-      console.log('Найдены темы в базе данных:')
-      anchors.forEach((findLink, index) => {
-        const linkTitle = findLink.getAttribute('title').trim()
-        console.log((index + 1) + ') ' + linkTitle)
 
-        // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
-        if (linkTitle.indexOf(certNameFinal) >= 0) {
-          foundLinks.push(findLink)
-        }
-      })
+      if (anchors.length) {
+        console.log('Найдены темы в базе данных:')
+        anchors.forEach((findLink, index) => {
+          const linkTitle = findLink.getAttribute('title').trim()
+          anchorAll.push(findLink)
+          anchorAllTitles.push(linkTitle)
+          console.log((index + 1) + ') ' + linkTitle)
+
+          // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
+          if (linkTitle.indexOf(certNameFinal) >= 0) {
+            foundLinks.push(findLink)
+            anchorIndex = anchorAll.length
+          }
+        })
+      } else {
+        console.log('... НЕ НАЙДЕНО ...')
+      }
+
       /*
         получилось так что есть 2020 варианты и просто без даты. И нужно как-то понять чтобы брать второй
 
@@ -215,9 +212,27 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
         В качестве временного решения могу предложить брать последний вариант, так как чаше нужно более новые тесты
       */
       // todo @ANKU @LOW - в будущем давать выбор пользователю
+
       // anchor = foundLinks[0]
-      anchor = foundLinks[foundLinks.length - 1]
+      // anchor = foundLinks[foundLinks.length - 1]
+      if (foundLinks.length === 1) {
+        anchor = foundLinks[0]
+      }
       prevSearch = certNameFinal
+    }
+
+    // если было несколько вариантов или не найден
+    if (!anchor && anchorAllTitles.length) {
+      const userChoice = prompt(
+        anchorAllTitles
+          .map((title, index) => `${index + 1}) ${title}`)
+          .join('\n'),
+        `${(anchorIndex || 0) + 1}`,
+      )
+
+      if (userChoice) {
+        anchor = anchorAll[parseInt(userChoice, 10) - 1]
+      }
     }
 
     if (!anchor) {
@@ -284,8 +299,8 @@ function startExecute(mapResult) {
         .textContent
 
       if (prevQuestion !== question) {
-        // todo @ANKU @LOW - так как таймер 2000 резуоттат может не успеть поставится и запускается поврно
-        console.log('Вопрос ' + pageQuestionNumber + ': ', question)
+        // todo @ANKU @LOW - так как таймер 2000 результат может не успеть поставится и запускается поврно
+        console.log('Вопрос ' + pageQuestionNumber + ': ', question[0], question[1])
       }
 
       const foundKey = allKeys.find((key) => compare(key, question))
