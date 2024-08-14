@@ -127,6 +127,28 @@ async function fetchFromExtension(url) {
   })
 }
 
+const SEARCH_MATCHES = [
+  // 1) убираем год - так как часто 2021 в базе ответов нет
+  // -2021
+  (searchTerm) => searchTerm.replaceAll(/\s?-?\s?\d{4}$/gi, ''),
+
+  // 2)
+  // Недержание мочи (по утвержденным клиническим рекомендациям)-2020
+  // Недержание мочи (по клиническим рекомендациям)
+  (searchTerm, prevTerm) => prevTerm.replaceAll(
+    'по утвержденным клиническим рекомендациям',
+    'по клиническим рекомендациям',
+  ),
+
+  // 3) "Взрослые" в ответах, а в вопросе уже нет
+  // Доброкачественная гиперплазия предстательной железы (по утвержденным клиническим рекомендациям) - 2024
+  // Доброкачественная гиперплазия предстательной железы. Взрослые (по утвержденным клиническим рекомендациям) - 2024
+  (searchTerm) => searchTerm
+    .substring(0, 45)
+    // обрезаем последнее слово, так как оно может быть неполным
+    .replaceAll(/\W(\w+)$/gi, ''),
+]
+
 async function searchAnswers(certName, linkToAnswers = undefined) {
   console.log('ТЕМА:\n', certName)
 
@@ -154,8 +176,8 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     let anchor
     let prevSearch = certName
 
-    for (let i = 0; !anchor && i < testSearchMatches.length; i++) {
-      const matcher = testSearchMatches[i]
+    for (let i = 0; !anchor && i < SEARCH_MATCHES.length; i++) {
+      const matcher = SEARCH_MATCHES[i]
 
       const certNameFinal = matcher(certName, prevSearch)
 
