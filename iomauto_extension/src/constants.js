@@ -13,6 +13,7 @@ const MODULE_STATUS = {
   ERROR: 'ERROR',
 }
 
+
 // const MODULE_STATUS_TEXT_MAP = {
 //   [MODULE_STATUS.NEW]: [],
 //   [MODULE_STATUS.SEARCHING]: ['...', '#ffd200'],
@@ -21,3 +22,4 @@ const MODULE_STATUS = {
 //   [MODULE_STATUS.DONE]: ['DONE', '#165af3'],
 //   [MODULE_STATUS.ERROR]: ['ER', '#6c0029'],
 // }
+
