@@ -146,14 +146,14 @@ const SEARCH_MATCHES = [
   (searchTerm) => searchTerm
     .substring(0, 45)
     // обрезаем последнее слово, так как оно может быть неполным
-    .replaceAll(/\W(\w+)$/gi, ''),
+    .replaceAll(/\s([^\s]*)$/gi, ''),
 
   // Гастрит и дуоденит (по утвержденным клиническим рекомендациям) - 2024
   // Гастрит и дуоденит. Взрослые (по утвержденным клиническим рекомендациям) - 2024
   (searchTerm) => searchTerm
     .substring(0, 20)
     // обрезаем последнее слово, так как оно может быть неполным
-    .replaceAll(/\W(\w+)$/gi, ''),
+    .replaceAll(/\s([^\s]*)$/gi, ''),
 ]
 
 async function searchAnswers(certName, linkToAnswers = undefined) {
@@ -294,7 +294,7 @@ class IOMError extends Error {
 }
 
 function getRandomInt(min, max) {
-  return Math.random() * (max - min) + min;
+  return Math.round(Math.random() * (max - min) + min);
 }
 
 function startExecute(mapResult) {
@@ -303,6 +303,8 @@ function startExecute(mapResult) {
   // const mapResult = JSON.parse(input)
 
   const allKeys = Object.keys(mapResult)
+  // 50% что будет ошибка в одном из вопросов
+  const randomOneMistakeIndex = getRandomInt(0, allKeys.length - 1) * getRandomInt(0, 1)
 
   let pageQuestionNumber = 1
   let prevQuestion
