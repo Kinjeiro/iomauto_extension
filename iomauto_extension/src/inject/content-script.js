@@ -147,6 +147,13 @@ const SEARCH_MATCHES = [
     .substring(0, 45)
     // обрезаем последнее слово, так как оно может быть неполным
     .replaceAll(/\W(\w+)$/gi, ''),
+
+  // Гастрит и дуоденит (по утвержденным клиническим рекомендациям) - 2024
+  // Гастрит и дуоденит. Взрослые (по утвержденным клиническим рекомендациям) - 2024
+  (searchTerm) => searchTerm
+    .substring(0, 20)
+    // обрезаем последнее слово, так как оно может быть неполным
+    .replaceAll(/\W(\w+)$/gi, ''),
 ]
 
 async function searchAnswers(certName, linkToAnswers = undefined) {
