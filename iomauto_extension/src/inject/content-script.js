@@ -157,7 +157,7 @@ const SEARCH_MATCHES = [
 ]
 
 async function searchAnswers(certName, linkToAnswers = undefined) {
-  console.log('ТЕМА:\n', certName)
+  log('ТЕМА:\n', certName)
 
   let linkToAnswersFinal = linkToAnswers
   if (!linkToAnswersFinal) {
@@ -193,7 +193,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
       let foundLinks = []
 
       if (anchors.length) {
-        console.log('Найдены темы в базе данных:')
+        log('Найдены темы в базе данных:')
         anchors.forEach((findLink, index) => {
           const linkTitle = findLink.getAttribute('title').trim()
           // anchorAll.push(findLink)
@@ -203,7 +203,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
             // берем всегда первое полное совпадение, а то бывает 2 теста одинаково называются
             // к примеру "Профилактика онкологических заболеваний"
             anchorAllMap[linkTitle] = findLink
-            console.log((index + 1) + ') ' + linkTitle)
+            log((index + 1) + ') ' + linkTitle)
 
             // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
             if (linkTitle.indexOf(certNameFinal) >= 0) {
@@ -213,7 +213,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
           }
         })
       } else {
-        console.log('... НЕ НАЙДЕНО ...')
+        log('... НЕ НАЙДЕНО ...')
       }
 
       /*
@@ -251,13 +251,13 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     }
 
     if (!anchor) {
-      throw new Error('Не найдены ответы в базе данных на данную тему')
+      throw new IOMError('Не найдены ответы в базе данных на данную тему')
     }
-    console.log('Выбрали: ' + anchor.getAttribute('title').trim())
+    log('Выбрали: ' + anchor.getAttribute('title').trim())
     linkToAnswersFinal = DEFAULT_URL + anchor.getAttribute("href")
 
     // console.log('ССЫЛКА на ОТВЕТЫ:\n', linkToAnswersFinal)
-    console.log('ССЫЛКА на ОТВЕТЫ:\n', anchor.getAttribute("href"))
+    log('ССЫЛКА на ОТВЕТЫ:\n', anchor.getAttribute("href"))
   }
 
   // const htmlWithAnswers = await (await fetchFromExtension(linkToAnswersFinal)).text()
@@ -286,179 +286,179 @@ function compareAnswer(inputDataStr, pageStr) {
   return pageStr.replaceAll(/[, \.\;\)\+]/g, '').toLocaleLowerCase() === inputDataStr.replaceAll(/[, \.\;\)\+]/g, '').toLowerCase()
 }
 
+class IOMError extends Error {
+  constructor(message, ...otherArgs) {
+    super(message);
+    this.otherArgs = otherArgs;
+  }
+}
+
+function getRandomInt(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
 function startExecute(mapResult) {
   // todo ограничение на 10000
   // const input =  window.prompt('JSON c ответами')
   // const mapResult = JSON.parse(input)
 
   const allKeys = Object.keys(mapResult)
-  console.log(mapResult)
 
-  function compare(inputDataStr, pageStr) {
-    // могут быть не заглавные, могут быть запятые лишние в конце
-    // поэтому обрежем в конце
-    // return inputDataStr.match(pageStr.substr(0, pageStr.length - 1))
-    // return inputDataStr.match(pageStr)
-    // return pageStr.indexOf(inputDataStr) >= 0
-
-    // return pageStr.replaceAll(/[\.\;\+]+$/g, '') === inputDataStr
-    // нормализация
-    return pageStr.replaceAll(/[, \.\;\)\+]/g, '') === inputDataStr.replaceAll(/[, \.\;\)\+]/g, '')
-  }
-
-
-  let intervalTimerId
   let pageQuestionNumber = 1
   let prevQuestion
 
-  function stopProcess(error, ...args) {
-    clearInterval(intervalTimerId);
-
-    if (error) {
-      logErrorNotification(error, ...args)
-    } else {
-      chrome.storage.sync.set({
-        moduleStatus: MODULE_STATUS.DONE,
-        error: undefined,
-      })
-    }
-  }
-
   function checkAnswer() {
-    try {
-      const question = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-title > div')
-        .textContent
+    const question = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-title > div')
+      .textContent
 
-      if (prevQuestion !== question) {
-        // todo @ANKU @LOW - так как таймер 2000 результат может не успеть поставится и запускается поврно
-        console.log('Вопрос ' + pageQuestionNumber + ': ', question[0], question[1])
-      }
+    if (prevQuestion !== question) {
+      // todo @ANKU @LOW - так как таймер 2000 результат может не успеть поставится и запускается поврно
+      log('Вопрос ' + pageQuestionNumber + ': ', question)
+    }
 
-      const foundKey = allKeys.find((key) => compare(key, question))
+    const foundKey = allKeys.find((key) => compareAnswer(key, question))
 
 
-      if (foundKey) {
-        const findAnswers = mapResult[foundKey]
-        // console.log('Найдены ответы: ', findAnswers)
-        console.log(findAnswers)
+    if (foundKey) {
+      const findAnswers = mapResult[foundKey]
+      // console.log('Найдены ответы: ', findAnswers)
+      log(findAnswers[0], findAnswers[1])
 
-        let randomPageAnswers = []
+      let randomPageAnswers = []
 
-        let hasAnyAnswer = false
-        /*
-          В ответах сразу два одинаковых вопроса, просто варианты выбора разные.
-          Сделали multiple решение - массив массивов:
-          [
-             ["ответ 1", "ответ 2"],
-             ["ответ 4"],
-          ]
-        */
-        // todo @ANKU @LOW - на сайте нету болдов с ответами, поэтому делаем хак просто оставляем без ответа
-        if (findAnswers.length === 0) {
-          logError(
-            'ОШИБКА! На сайте нету правильного ответа на вопрос\n',
-            foundKey,
-          )
-          hasAnyAnswer = true
-        } else {
-          findAnswers.some((answersVariant, variantIndex) => {
-            answersVariant.forEach((answer) => {
-              // нужно каждый раз искать, так как форма обновляется после проставление ответа
-              const answersEls = document.querySelectorAll('mat-checkbox')
-              if (answersEls.length > 0) {
-                // НЕСКОЛЬКО ОТВЕТОВ
-                randomPageAnswers = [
-                  answersEls[0]?.querySelector('span'),
-                  answersEls[1]?.querySelector('span')
-                ]
-                answersEls.forEach((checkboxEl) => {
-                  const isChecked = checkboxEl.className.indexOf('mat-mdc-checkbox-checked') >= 0
-                  const checboxSpanEl = checkboxEl.querySelector('span')
-                  if (isChecked) {
-                    hasAnyAnswer = true
-                  } else if (compare(answer, checboxSpanEl.textContent)) {
-                    hasAnyAnswer = true
-                    checboxSpanEl.click()
-                  }
-                })
-              } else {
-                // ОДИН ОТВЕТ
-                const radioEls = document.querySelectorAll('mat-radio-button')
-                randomPageAnswers = radioEls[0] ? [
-                  radioEls[0]?.querySelector('span'),
-                ] : []
-                radioEls.forEach((radioEl) => {
-                  const isChecked = radioEl.className.indexOf('mat-mdc-radio-checked') >= 0
-                  const checboxSpanEl = radioEl.querySelector('span')
-                  if (isChecked) {
-                    hasAnyAnswer = true
-                  } else if (compare(answer, checboxSpanEl.textContent)) {
-                    hasAnyAnswer = true
-                    checboxSpanEl.click()
-                  }
-                })
-              }
-            })
-
-            if (hasAnyAnswer) {
-              // если нашли ответы прекращаем вариантов блоков ответов перебирать
-              return true
-            } else if (variantIndex < findAnswers.length - 1) {
-              log('Пробуем подставить другой блок ответов:\n', findAnswers[variantIndex + 1])
+      let hasAnyAnswer = false
+      /*
+        В ответах сразу два одинаковых вопроса, просто варианты выбора разные.
+        Сделали multiple решение - массив массивов:
+        [
+           ["ответ 1", "ответ 2"],
+           ["ответ 4"],
+        ]
+      */
+      // todo @ANKU @LOW - на сайте нету болдов с ответами, поэтому делаем хак просто оставляем без ответа
+      if (findAnswers.length === 0) {
+        logError(
+          'ОШИБКА! На сайте нету правильного ответа на вопрос\n',
+          foundKey,
+        )
+        hasAnyAnswer = true
+      } else {
+        findAnswers.some((answersVariant, variantIndex) => {
+          answersVariant.forEach((answer) => {
+            // нужно каждый раз искать, так как форма обновляется после проставление ответа
+            const answersEls = document.querySelectorAll('mat-checkbox')
+            if (answersEls.length > 0) {
+              // НЕСКОЛЬКО ОТВЕТОВ
+              randomPageAnswers = [
+                answersEls[0]?.querySelector('span'),
+                answersEls[1]?.querySelector('span')
+              ]
+              answersEls.forEach((checkboxEl) => {
+                const isChecked = checkboxEl.className.indexOf('mat-mdc-checkbox-checked') >= 0
+                const checboxSpanEl = checkboxEl.querySelector('span')
+                if (isChecked) {
+                  hasAnyAnswer = true
+                } else if (compareAnswer(answer, checboxSpanEl.textContent)) {
+                  hasAnyAnswer = true
+                  checboxSpanEl.click()
+                }
+              })
+            } else {
+              // ОДИН ОТВЕТ
+              const radioEls = document.querySelectorAll('mat-radio-button')
+              randomPageAnswers = radioEls[0] ? [
+                radioEls[0]?.querySelector('span'),
+              ] : []
+              radioEls.forEach((radioEl) => {
+                const isChecked = radioEl.className.indexOf('mat-mdc-radio-checked') >= 0
+                const checboxSpanEl = radioEl.querySelector('span')
+                if (isChecked) {
+                  hasAnyAnswer = true
+                } else if (compareAnswer(answer, checboxSpanEl.textContent)) {
+                  hasAnyAnswer = true
+                  checboxSpanEl.click()
+                }
+              })
             }
           })
-        }
 
-
-        // todo @ANKU @LOW - добавить варнинг икоку
-        // todo @ANKU @LOW - @hack - делаем хак, что если не найдены ответы, выберем первый вариант, чтобы продолжить
-        if (!hasAnyAnswer) {
-          logError(
-            'ОШИБКА! НЕ найден ответ на вопрос\n',
-            foundKey,
-          )
-          if (randomPageAnswers.length > 0) {
-            randomPageAnswers.forEach((randomAnswer) => randomAnswer?.click())
-            hasAnyAnswer = true
+          if (hasAnyAnswer) {
+            // если нашли ответы прекращаем вариантов блоков ответов перебирать
+            return true
+          } else if (variantIndex < findAnswers.length - 1) {
+            log('Пробуем подставить другой блок ответов:\n', findAnswers[variantIndex + 1])
           }
-        }
-
-        if (!hasAnyAnswer) {
-          stopProcess('НЕ найден ответ на вопрос. ВЫБЕРИТЕ ответы сами', question, findAnswers)
-          debugger
-        } else {
-          //const buttonApplyEl = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-actions > div > button.question-buttons-primary.mdc-button.mdc-button--raised.mat-mdc-raised-button.mat-primary.mat-mdc-button-base.ng-star-inserted')
-          const buttonApplyEl = document.querySelector('mat-card-actions button.question-buttons-primary.mdc-button.mat-primary')
-
-          if (intervalTimerId && buttonApplyEl.textContent === 'Завершить тестирование') {
-            stopProcess();
-            console.log('КОНЕЦ. ПРОЙДЕНО ' + pageQuestionNumber + 'ответов.')
-          } else {
-            //buttonApplyEl.click()
-            //pageQuestionNumber += 1
-
-            setTimeout(() => {
-              buttonApplyEl.click()
-
-              if (prevQuestion !== question) {
-                pageQuestionNumber += 1
-              }
-              prevQuestion = question
-            }, 300)
-          }
-        }
-      } else {
-        stopProcess('Не найден вопрос в ответах: ' + question, '\n', mapResult)
-        debugger
+        })
       }
-    } catch (e) {
-      stopProcess('ОШИБКА исполнения', e)
+
+
+      // todo @ANKU @LOW - добавить варнинг икоку
+      // todo @ANKU @LOW - @hack - делаем хак, что если не найдены ответы, выберем первый вариант, чтобы продолжить
+      if (!hasAnyAnswer) {
+        logError(
+          'ОШИБКА! НЕ найден ответ на вопрос\n',
+          foundKey,
+        )
+        if (randomPageAnswers.length > 0) {
+          randomPageAnswers.forEach((randomAnswer) => randomAnswer?.click())
+          hasAnyAnswer = true
+        }
+      }
+
+      if (!hasAnyAnswer) {
+        debugger
+        throw new IOMError('НЕ найден ответ на вопрос. ВЫБЕРИТЕ ответы сами', question, findAnswers)
+      } else {
+        //const buttonApplyEl = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-actions > div > button.question-buttons-primary.mdc-button.mdc-button--raised.mat-mdc-raised-button.mat-primary.mat-mdc-button-base.ng-star-inserted')
+        const buttonApplyEl = document.querySelector('mat-card-actions button.question-buttons-primary.mdc-button.mat-primary')
+
+        if (buttonApplyEl.textContent === 'Завершить тестирование') {
+          log('КОНЕЦ. ПРОЙДЕНО ' + pageQuestionNumber + 'ответов.')
+          return true
+        } else {
+          //buttonApplyEl.click()
+          //pageQuestionNumber += 1
+
+          setTimeout(() => {
+            buttonApplyEl.click()
+
+            if (prevQuestion !== question) {
+              pageQuestionNumber += 1
+            }
+            prevQuestion = question
+          }, 300)
+        }
+      }
+    } else {
       debugger
+      throw new IOMError('Не найден вопрос в ответах: ' + question, '\n', mapResult)
     }
 
+    return false
   }
 
-  intervalTimerId = setInterval(checkAnswer, 2000)
+  async function checkAnswerWrapper() {
+    try {
+      const isEnd = await checkAnswer()
+      if (!isEnd) {
+        // todo @ANKU @LOW - вынеси это в настройки
+        // запускаем проверку еще раз пока не дойдем до последней кнопки
+        const randomAnswerDelay = getRandomInt(6000, 11000)
+        log('Задержка ответа:', randomAnswerDelay)
+        setTimeout(checkAnswerWrapper, randomAnswerDelay)
+      } else {
+        chrome.storage.sync.set({
+          moduleStatus: MODULE_STATUS.DONE,
+          error: undefined,
+        })
+      }
+    } catch (e) {
+      logErrorNotification(e.message, ...(e.otherArgs || []))
+    }
+  }
+
+  checkAnswerWrapper()
+  // intervalTimerId = setInterval(checkAnswer, 2000)
 
   // setTimeout(checkAnwser, 1500)
   // setTimeout(checkAnwser, 3000)
@@ -529,6 +529,7 @@ async function runSearchAnswers() {
     clearInterval(intervalRunSearchAnswers)
 
     finalMapResult = await searchAnswers(certName)
+    console.log(finalMapResult)
 
     chrome.storage.sync.set({
       moduleStatus: MODULE_STATUS.WAIT_QA_FORM,
@@ -621,258 +622,3 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
     }
   })()
 })
-
-// chrome.action.onClicked.addListener(async (tab) => {
-//   chrome.storage.sync.set({
-//     moduleStatus: MODULE_STATUS.EXECUTING,
-//   })
-//
-//   console.log('ANKU DONE')
-//   await startExecute(finalMapResult)
-//
-//   chrome.storage.sync.set({
-//     moduleStatus: MODULE_STATUS.DONE,
-//   })
-// })
-
-// // Retriving user options
-// chrome.extension.sendMessage({}, function (settings) {
-//   initOnHashChangeAction(settings['Domains'])
-//   initShortcuts(settings['Shortcut'], settings['BackgroundShortcut'], settings['MuteShortcut'])
-//
-//   initListViewShortcut()
-//   initForInbox()
-// })
-//
-// chrome.runtime.onMessage.addListener(function (req) {
-//   var element = req['muteURL'] ? document.querySelector('[href="' + req['muteURL'] + '"]') : null
-//
-//   if (element) {
-//     element.innerText = "Muted!"
-//   }
-// })
-//
-// function initForInbox() {
-//   window.idled = true
-// }
-//
-// function initOnHashChangeAction(domains) {
-//   var allDomains = '//github.com,'
-//   if(domains) allDomains += domains
-//
-//   // Take string -> make array -> make queries -> avoid nil -> join queries to string
-//   var selectors = allDomains.replace(/\s/g, '').split(',').map(function (name) {
-//     if (name.length) return (".AO [href*='" + name + "']")
-//   }).filter(function (name) { return name }).join(", ")
-//
-//   intervals = []
-//
-//   // Find GitHub link and append it to tool bar on hashchange
-//   window.onhashchange = function () {
-//     fetchAndAppendGitHubLink()
-//   }
-//
-//   function fetchAndAppendGitHubLink () {
-//     // In case previous intervals got interrupted
-//     clearAllIntervals()
-//
-//     var retryForActiveMailBody = setInterval(function () {
-//       var mail_body = Array.prototype.filter.call(document.querySelectorAll('.nH.hx'), function () { return this.clientHeight != 0 })[0]
-//
-//       if (mail_body ) {
-//         var github_links = reject_unwanted_paths(mail_body.querySelectorAll(selectors))
-//
-//         // Avoid multple buttons
-//         Array.prototype.forEach.call(document.querySelectorAll('.github-link, .github-mute'), function (ele) {
-//           ele.remove()
-//         })
-//
-//         if (github_links.length ) {
-//           var url = github_links[github_links.length-1].href
-//           var muteLink
-//
-//           // skip notification unsubscribe links:
-//           if (url.match('notifications/unsubscribe')) {
-//             var muteURL = url
-//             url = github_links[github_links.length-2].href
-//             muteLink = document.createElement('a')
-//             muteLink.className = 'github-mute T-I J-J5-Ji T-I-Js-Gs mA mw T-I-ax7 L3 YV'
-//             muteLink.innerText = 'Mute thread'
-//             muteLink.href = muteURL
-//
-//             muteLink.addEventListener('click', function (evt) {
-//               evt.preventDefault()
-//               chrome.extension.sendMessage({url: muteURL, active: false, mute: true})
-//               muteLink.innerHTML = '&ctdot;'
-//             })
-//           }
-//
-//           // Go to thread instead of diffs or file views
-//           if (url.match(/^(.+\/(issue|pull)\/\d+)/)) url = url.match(/^(.+\/(issue|pull)\/\d+)/)[1]
-//           var link = document.createElement('a')
-//           link.href = url
-//           link.className = 'github-link T-I J-J5-Ji T-I-Js-Gs mA mw T-I-ax7 L3 YV'
-//           link.target = '_blank'
-//           link.innerText = 'View on GitHub'
-//
-//           document.querySelector('.iH > div').appendChild(link)
-//
-//           if (muteLink) {
-//             document.querySelector('.iH > div').appendChild(muteLink)
-//           }
-//
-//           window.idled = true
-//
-//           document.getElementsByClassName('github-link')[0].addEventListener("DOMNodeRemovedFromDocument", function (ev) {
-//             fetchAndAppendGitHubLink()
-//           }, false)
-//         }
-//
-//         clearInterval(retryForActiveMailBody)
-//       } else if ( !document.querySelector('.nH.hx') ) {
-//         // Not in a mail view
-//         clearInterval(retryForActiveMailBody)
-//       }
-//     }, 100)
-//
-//     intervals.push(retryForActiveMailBody)
-//   }
-// }
-//
-// function initShortcuts(shortcut, backgroundShortcut, muteShortcut) {
-//   document.addEventListener('keydown', function (event) {
-//     // Shortcut: bind user's combination, if a button exist and event not in a textarea
-//     if (document.querySelector('.gE')) {
-//       document.querySelector('.gE').classList.remove('github-link')
-//     }
-//
-//     Array.prototype.forEach.call(document.querySelectorAll('.scroll-list-item-open .gE, .scroll-list-item-highlighted .gE'), function (ele) {
-//       ele.classList.add('github-link')
-//     })
-//
-//     if (processRightCombinationBasedOnShortcut(shortcut, event) && window.idled && getVisible(document.getElementsByClassName('github-link')) && notAnInput(event.target)) {
-//       triggerGitHubLink(false)
-//     }
-//
-//     // Bacground Shortcut: bind user's combination, if a button exist and event not in a textarea
-//     if (processRightCombinationBasedOnShortcut(backgroundShortcut, event) && window.idled && getVisible(document.getElementsByClassName('github-link')) && notAnInput(event.target)) {
-//       triggerGitHubLink(true)
-//     }
-//
-//     // Mute Shortcut: bind user's combination, if a button exist and event not in a textarea
-//     if (processRightCombinationBasedOnShortcut(muteShortcut, event) && window.idled && getVisible(document.getElementsByClassName('github-mute')) && notAnInput(event.target)) {
-//       getVisible(document.getElementsByClassName('github-mute')).click()
-//     }
-//   })
-// }
-//
-// function initListViewShortcut(regexp) {
-//   document.addEventListener('keypress', function (event) {
-//     // Shortcut: bind ctrl + return
-//     var selected = getVisible(document.querySelectorAll('.zA[tabindex="0"]'))
-//     if (event.ctrlKey && event.keyCode == 13 && selected ) {
-//       generateUrlAndGoTo(selected)
-//     }
-//   })
-// }
-//
-// // Trigger the appended link in mail view
-// function triggerGitHubLink (backgroundOrNot) {
-//   // avoid link being appended multiple times
-//   window.idled = false
-//   var link = getVisible(document.getElementsByClassName('github-link'))
-//   chrome.extension.sendMessage({url: link.href, active: !backgroundOrNot})
-//
-//   setTimeout( function (){ window.idled = true }, 100)
-// }
-//
-// // Go to selected email GitHub thread
-// function generateUrlAndGoTo (selected) {
-//   var gotoaction = selected.querySelectorAll('.aKS [role="button"]')[0]
-//
-//   if(gotoaction) {
-//     gotoaction.dispatchEvent(fakeEvent('mousedown', true))
-//   }
-// }
-//
-// //
-// // Helpers
-// //
-//
-// function processRightCombinationBasedOnShortcut (shortcut, event) {
-//   // Processing shortcut from preference
-//   combination = shortcut.replace(/\s/g, '').split('+')
-//
-//   keys = ['shift', 'alt', 'meta', 'ctrl']
-//   trueOrFalse = []
-//
-//   // If a key is in the combination, push the value to trueOrFalse array, and delete it from the combination
-//   keys.map(function (key) {
-//     index = combination.indexOf(key)
-//     if(index >= 0) {
-//       if(key == "shift") trueOrFalse.push(event.shiftKey)
-//       if(key == "alt")   trueOrFalse.push(event.altKey)
-//       if(key == "meta")  trueOrFalse.push(event.metaKey)
-//       if(key == "ctrl")  trueOrFalse.push(event.ctrlKey)
-//
-//       combination.splice(index, 1)
-//     }
-//   })
-//
-//   // If there is a keyCode left, add that to the mix.
-//   if(combination.length) trueOrFalse.push(event.keyCode.toString() == combination[0])
-//
-//   // Evaluate trueOrFalse by looking for the existence of False
-//   return trueOrFalse = (trueOrFalse.indexOf(false) < 0)
-// }
-//
-// // .click() doesn't usually work as expected
-// function fakeEvent (event, bubbles) {
-//   var click = new MouseEvent(event, {bubbles: bubbles})
-//   return click
-// }
-//
-// function linkWithUrl (url) {
-//   var l = document.createElement('a')
-//   l.href = url
-//   l.target = "_blank"
-//   return l
-// }
-//
-// function getVisible (nodeList) {
-//   if(nodeList.length) {
-//     var node
-//     for(var i=0; i < nodeList.length; i++) {
-//       if(typeof node === 'undefined' && (nodeList[i].offsetHeight > 0 || nodeList[i].clientWidth > 0 || nodeList[i].clientHeight > 0)) {
-//         node = nodeList[i]
-//         break
-//       }
-//     }
-//     return node
-//   }
-// }
-//
-// function notAnInput (element) {
-//   return !element.className.match(/editable/) && element.tagName != "TEXTAREA" && element.tagName != "INPUT"
-// }
-//
-// function clearAllIntervals () {
-//   intervals.map(function (num) {
-//     clearInterval(num)
-//     delete intervals[intervals.indexOf(num)]
-//   })
-// }
-//
-// // Reject unsubscribe, subscription and verification management paths
-// // Make sure the keywords((un)subscribe) can still be repository names
-// function reject_unwanted_paths (links) {
-//   var paths = ['\/\/[^\/]*\/mailers\/unsubscribe\?',
-//                '\/\/[^\/]*\/.*\/.*\/unsubscribe_via_email',
-//                '\/\/[^\/]*\/.*\/.*\/subscription$',
-//                '\/\/[^\/]*\/.*\/.*\/emails\/.*\/confirm_verification\/.*']
-//   var regexp = new RegExp(paths.join('|'))
-//   return Array.prototype.filter.call(links, function (link) {
-//     if(!link.href.match(regexp)) return this
-//   })
-// }
-
