@@ -304,7 +304,11 @@ function startExecute(mapResult) {
 
   const allKeys = Object.keys(mapResult)
   // 50% что будет ошибка в одном из вопросов
-  const randomOneMistakeIndex = getRandomInt(0, allKeys.length - 1) * getRandomInt(0, 1)
+  let randomOneMistakeNumber
+  if (getRandomInt(0, 1) === 1) {
+    randomOneMistakeNumber = getRandomInt(1, allKeys.length)
+    log('БУДЕТ ДОПУЩЕНА СПЕЦИАЛЬНО ОШИБКА в вопросе №' + (randomOneMistakeNumber))
+  }
 
   let pageQuestionNumber = 1
   let prevQuestion
@@ -354,9 +358,22 @@ function startExecute(mapResult) {
              ["ответ 4"],
           ]
           */
+        if (pageQuestionNumber === randomOneMistakeNumber) {
+          if (typeof findAnswers === 'undefined' || findAnswers.length === 0 || findAnswers[0].length === 0) {
+            // нету ответов - выбираем первый результат
+            hasAnyAnswer = true
+            setTimeout(() => spanEl.click(), 100)
+            return true
+          }
+        }
         const result = findAnswers?.some((answersVariant, variantIndex) => {
           return answersVariant.some((answer) => {
-            if (compareAnswer(answer, answerFromPage)) {
+            const isCorrect = compareAnswer(answer, answerFromPage)
+            if (
+              // если нужно сделать ошибку, то выбираем неправильный вариант для клика
+              pageQuestionNumber === randomOneMistakeNumber && !isCorrect
+              || isCorrect
+            ) {
               hasAnyAnswer = true
               spanEl.click()
               return true
