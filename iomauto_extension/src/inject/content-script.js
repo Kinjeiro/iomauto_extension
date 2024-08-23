@@ -314,8 +314,36 @@ function startExecute(mapResult) {
   let prevQuestion
 
   function checkAnswer() {
-    const question = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-title > div')
-      .textContent
+      let question; // TO DO CONST
+      const nonFilteredQuestion = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-title > div')
+        .textContent
+  
+    // -------------------------------------------------------------------------------------------------------------------------------------- modified by vastayaa
+      // Что бы под ногами не мешалась подстава из латинских букв - валидируем вопрос и меняем все на русский
+        function replaceEnglishWithRussianLetters(q) {
+          const replacements = {
+            'a': 'а',
+            'A': 'А',
+            'e': 'е',
+            'E': 'Е',
+            'o': 'о',
+            'O': 'О',
+            // Если добавят еще что-то
+          };
+        
+          const englishConsonants = /[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]/;
+        
+          return q.split(' ').map(word => {
+            if (englishConsonants.test(word)) {
+              return word; // Если само слово на инглиш лангуаге - пропускаем его
+            } else {
+              return word.replace(/[a-z]/gi, match => replacements[match.toLowerCase()] || match);
+            }
+          }).join(' ');
+        }
+        
+        question = replaceEnglishWithRussianLetters(nonFilteredQuestion);
+    // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
     if (prevQuestion !== question) {
       // todo @ANKU @LOW - так как таймер 2000 результат может не успеть поставится и запускается поврно
@@ -386,7 +414,6 @@ function startExecute(mapResult) {
           //   log('Пробуем подставить другой блок ответов:\n', findAnswers[variantIndex + 1])
           // }
         })
-
         hasAnyAnswer = hasAnyAnswer || result
         return result
       }
