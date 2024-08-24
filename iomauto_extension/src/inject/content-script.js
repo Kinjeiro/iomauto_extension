@@ -91,10 +91,13 @@ const LATIN_TO_VIEW_CYRILLIC = {
 function latinToViewCyrillic(input) {
   return input.split("").map(char => LATIN_TO_VIEW_CYRILLIC[char] || char).join("");
 }
-function normalizeTextCompare(str) {
-  return latinToViewCyrillic(str)
-    .replaceAll(/["'\[\](), .;+\-^!@#$%&*]/g, '') // убираем все символы лишние
+function normalizeTextCompare(str, noTrim = false) {
+  const result = latinToViewCyrillic(str)
     .toLocaleLowerCase() // приводим к нижнему регистру
+  return noTrim
+    ? result
+    : result.replaceAll(/ /g, '') // убираем пробелы
+
 }
 
 
@@ -234,19 +237,19 @@ const SEARCH_MATCHES = [
   // 3) заменяем все англицизмы, убираем скобки и символы
   //
   //
-  (searchTerm, prevTerm) => normalizeTextCompare(prevTerm),
+  (searchTerm, prevTerm) => normalizeTextCompare(prevTerm, true),
 
   // 3) "Взрослые" в ответах, а в вопросе уже нет
   // Доброкачественная гиперплазия предстательной железы (по утвержденным клиническим рекомендациям) - 2024
   // Доброкачественная гиперплазия предстательной железы. Взрослые (по утвержденным клиническим рекомендациям) - 2024
-  (searchTerm) => searchTerm
+  (searchTerm) => normalizeTextCompare(searchTerm, true)
     .substring(0, 45)
     // обрезаем последнее слово, так как оно может быть неполным
     .replaceAll(/\s([^\s]*)$/gi, ''),
 
   // Гастрит и дуоденит (по утвержденным клиническим рекомендациям) - 2024
   // Гастрит и дуоденит. Взрослые (по утвержденным клиническим рекомендациям) - 2024
-  (searchTerm) => searchTerm
+  (searchTerm, prevTerm) => prevTerm
     .substring(0, 20)
     // обрезаем последнее слово, так как оно может быть неполным
     .replaceAll(/\s([^\s]*)$/gi, ''),
