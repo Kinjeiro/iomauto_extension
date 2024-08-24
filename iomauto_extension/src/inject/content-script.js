@@ -424,8 +424,13 @@ function startExecute(mapResult) {
   let prevQuestion
 
   function checkAnswer() {
-    const question = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-title > div')
-      .textContent
+    // todo @ANKU @LOW - вынести в настройки
+    // const questionEl = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-title > div')
+    const questionEl = document.querySelector('.question-title-text')
+    if (!questionEl) {
+      throw new IOMError('Неправильная верстка блока вопросов')
+    }
+    const question = questionEl.textContent
 
     if (prevQuestion !== question) {
       // todo @ANKU @LOW - так как таймер 2000 результат может не успеть поставится и запускается поврно
@@ -503,20 +508,20 @@ function startExecute(mapResult) {
     }
 
     // нужно каждый раз искать, так как форма обновляется после проставление ответа
-    const answersEls = document.querySelectorAll('mat-checkbox')
+    const answersEls = document.querySelectorAll('.mat-mdc-checkbox')
     const isMultiple = answersEls.length > 0
     if (answersEls.length > 0) {
       // НЕСКОЛЬКО ОТВЕТОВ
       // после каждого клика обновляются дом и нужно элементы заново искать
       for(let i=0; i < answersEls.length; i++) {
         testAnswer(
-          document.querySelectorAll('mat-checkbox')[i],
+          document.querySelectorAll('.mat-mdc-checkbox')[i],
           'mat-mdc-checkbox-checked'
         )
       }
     } else {
       // ОДИН ОТВЕТ
-      const radioEls = document.querySelectorAll('mat-radio-button')
+      const radioEls = document.querySelectorAll('.mat-mdc-radio-button')
       radioEls.forEach((radioEl, index) => {
         testAnswer(radioEl, 'mat-mdc-radio-checked')
       })
