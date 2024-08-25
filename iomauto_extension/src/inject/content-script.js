@@ -133,7 +133,7 @@ function answersParsing(doc = document) {
 
   const rowEls = doc.querySelectorAll('body > section > div > div > div.col-md.mw-820')
   if (rowEls.length === 0) {
-    console.log('ОШИБКА - не найдены ответы в интернете', doc.querySelector('body > section'))
+    log('ОШИБКА - не найдены ответы в интернете', doc.querySelector('body > section'))
     debugger
     throw new Error('ОШИБКА - не найдены ответы в интернете')
   } else {
@@ -277,7 +277,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     // const anchorAll = []
     // const anchorAllTitles = []
     let anchor
-    let anchorIndex
+    let anchorPosition
     let prevSearch = certName
 
     for (let i = 0; !anchor && i < SEARCH_MATCHES.length; i++) {
@@ -317,7 +317,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
             // log('Сравниваем\n',normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certNameFinal))
             if (normalizeTextCompare(linkTitle).indexOf(normalizeTextCompare(certNameFinal)) >= 0) {
               foundLinks.push(findLink)
-              anchorIndex = Object.keys(anchorAllMap).length
+              anchorPosition = Object.keys(anchorAllMap).length
             }
           }
         })
@@ -350,17 +350,17 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     }
 
     // если было несколько вариантов или не найден
-    debugger
     const anchorAllTitles = Object.keys(anchorAllMap)
     if (!anchor && anchorAllTitles.length) {
       const userChoice = prompt(
         anchorAllTitles
           .map((title, index) => `${index + 1}) ${title}`)
           .join('\n'),
-        `${(anchorIndex || 0) + 1}`,
+        `${anchorPosition || 1}`,
       )
 
       if (userChoice) {
+        // index = position - 1
         anchor = anchorAllMap[anchorAllTitles[parseInt(userChoice, 10) - 1]]
       }
     }
@@ -454,16 +454,18 @@ function startExecute(mapResult) {
 
     let hasAnyAnswer = false
     const pageAnswersMap = {
-      // заголовок - ссылка на span
+      // заголовок - функция на ссылку на span
     }
 
-    const testAnswer = (el, checkedClassName) => {
+    const testAnswer = (getEl, checkedClassName) => {
+      const el = getEl()
       const isChecked = el.className.indexOf(checkedClassName) >= 0
       // подходит как для множества так и для одно элемента
       const spanEl = el.querySelector('span')
       const answerFromPage = spanEl.textContent
 
-      pageAnswersMap[answerFromPage] = spanEl
+      // нужно каждый раз заново искать дом
+      pageAnswersMap[answerFromPage] = () => getEl().querySelector('span')
 
       if (isChecked) {
         hasAnyAnswer = true
@@ -516,18 +518,25 @@ function startExecute(mapResult) {
     const isMultiple = answersEls.length > 0
     if (answersEls.length > 0) {
       // НЕСКОЛЬКО ОТВЕТОВ
-      // после каждого клика обновляются дом и нужно элементы заново искать
       for(let i=0; i < answersEls.length; i++) {
         testAnswer(
-          document.querySelectorAll('.mat-mdc-checkbox')[i],
+          // после каждого клика обновляются дом и нужно элементы заново искать
+          ((index) => document.querySelectorAll('.mat-mdc-checkbox')[index]).bind(undefined, i),
           'mat-mdc-checkbox-checked'
+          // todo @ANKU @LOW - есть бага что если 4 ответа, успевают проставляться только 3
+          // Болезнь Фабри (по утвержденным клиническим рекомендациям) - 2024
+          // Вопрос 29:  К ложноположительным результатам может приводить
         )
       }
     } else {
       // ОДИН ОТВЕТ
       const radioEls = document.querySelectorAll('.mat-mdc-radio-button')
-      radioEls.forEach((radioEl, index) => {
-        testAnswer(radioEl, 'mat-mdc-radio-checked')
+      radioEls.forEach((radioEl, i) => {
+        testAnswer(
+          // radioEl,
+          ((index) => document.querySelectorAll('.mat-mdc-radio-button')[index]).bind(undefined, i),
+          'mat-mdc-radio-checked',
+        )
       })
     }
 
@@ -548,7 +557,8 @@ function startExecute(mapResult) {
             // todo @ANKU @LOW - нужно последовательно через паузу запуска клики
             Object.keys(pageAnswersMap).forEach((title, index) => {
               if (index === (manualIndexPlus - 1)) {
-                pageAnswersMap[title].click()
+                // вызываем поиск элемента, так как если их много дом каждый раз меняется
+                pageAnswersMap[title]().click()
                 hasAnyAnswer = true
               }
             })
@@ -660,6 +670,7 @@ let intervalRunSearchQAForm
 async function runSearchQAForm() {
   const hasQAs = document.querySelector('#questionAnchor')
 
+  console.log('hasQAs', hasQAs)
   if (hasQAs) {
     clearInterval(intervalRunSearchQAForm)
 
@@ -691,6 +702,7 @@ window.onload = function() {
   // is lazy inited and might return undefined
   setTimeout(() => {
     if (chrome.runtime?.id && chrome.storage?.sync) {
+      log('start from onload')
       // сначала нужно сбросить background статус
       chrome.storage.sync.set({
         moduleStatus: MODULE_STATUS.START_SERVICE,
@@ -714,6 +726,7 @@ window.onload = function() {
 // })
 window.onbeforeunload = function() {
   if (chrome.runtime?.id) {
+    log('start from onbeforeunload')
     chrome.storage.sync.set({
       // moduleStatus: MODULE_STATUS.NEW,
       moduleStatus: MODULE_STATUS.START_SERVICE,
