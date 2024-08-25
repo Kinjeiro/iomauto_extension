@@ -314,6 +314,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
             log((index + 1) + ') ' + linkTitle)
 
             // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
+            // log('Сравниваем\n',normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certNameFinal))
             if (normalizeTextCompare(linkTitle).indexOf(normalizeTextCompare(certNameFinal)) >= 0) {
               foundLinks.push(findLink)
               anchorIndex = Object.keys(anchorAllMap).length
@@ -340,13 +341,16 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
 
       // anchor = foundLinks[0]
       // anchor = foundLinks[foundLinks.length - 1]
-      if (foundLinks.length === 1) {
+      if (foundLinks.length > 1) {
+        break;
+      } else if (foundLinks.length === 1) {
         anchor = foundLinks[0]
       }
       prevSearch = certNameFinal
     }
 
     // если было несколько вариантов или не найден
+    debugger
     const anchorAllTitles = Object.keys(anchorAllMap)
     if (!anchor && anchorAllTitles.length) {
       const userChoice = prompt(
