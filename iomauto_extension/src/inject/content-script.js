@@ -94,6 +94,8 @@ function latinToViewCyrillic(input) {
 function normalizeTextCompare(str, noTrim = false) {
   const result = latinToViewCyrillic(str)
     .toLocaleLowerCase() // приводим к нижнему регистру
+    .replaceAll(/[=+!?'"«»,.()\[\]\-_:]/g, '') // убираем спец символы
+
   return noTrim
     ? result
     : result.replaceAll(/ /g, '') // убираем пробелы
