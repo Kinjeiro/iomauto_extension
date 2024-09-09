@@ -603,7 +603,7 @@ function startExecute(mapResult) {
       if (!isEnd) {
         // todo @ANKU @LOW - вынеси это в настройки
         // запускаем проверку еще раз пока не дойдем до последней кнопки
-        const randomAnswerDelay = getRandomInt(6000, 11000)
+        const randomAnswerDelay = getRandomInt(answerDelayMin, answerDelayMax)
         log('Задержка ответа:', randomAnswerDelay)
         setTimeout(checkAnswerWrapper, randomAnswerDelay)
       } else {
@@ -667,6 +667,8 @@ async function searchByCertName(linkToAnswers = undefined) {
   }
 }
 
+let answerDelayMin = 6000
+let answerDelayMax = 11000
 
 let intervalRunSearchQAForm
 async function runSearchQAForm() {
@@ -778,6 +780,15 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
         break
 
       case MODULE_STATUS.EXECUTING:
+        const answerDelay = prompt(
+          'Выберите диапазон случайно задержи между ответами, в секундах (минимально 2 секунды)\n(Нажмите Enter чтобы оставить предложенный)',
+          '6-11',
+        )
+        const [min, max] = answerDelay.replaceAll(/ /g, '').split('-')
+        answerDelayMin = Math.max(parseInt(min, 10) * 1000, 2000)
+        answerDelayMax = max ? Math.max(parseInt(max, 10) * 1000, answerDelayMin) : answerDelayMin
+        log('Задержка между ответами от ', answerDelayMin, ' до ', answerDelayMax)
+
         log('Подстановка значений...')
         startExecute(finalMapResult)
         break
