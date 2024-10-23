@@ -165,8 +165,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
 
             // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
             // log('Сравниваем\n',normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certNameFinal))
-            if (normalizeTextCompare(linkTitle)
-              .indexOf(normalizeTextCompare(certNameFinal)) >= 0) {
+            if (normalizeTextCompare(linkTitle) === normalizeTextCompare(certNameFinal)) {
               foundLinks.push(findLink)
               anchorPosition = Object.keys(anchorAllMap).length
             }
@@ -204,9 +203,13 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     const anchorAllTitles = Object.keys(anchorAllMap)
     if (!anchor && anchorAllTitles.length) {
       const userChoice = prompt(
-        anchorAllTitles
-          .map((title, index) => `${index + 1}) ${title}`)
-          .join('\n'),
+        `ВНИМАНИЕ! Точной темы НЕ НАЙДЕНО в базе ответов!\n
+Можете попробовать выбрать один из похожих, НО там может не быть некоторых ответов:\n
+${
+  anchorAllTitles
+    .map((title, index) => `${index + 1}) ${title}`)
+    .join('\n')
+}`,
         `${anchorPosition || 1}`,
       )
 
@@ -219,8 +222,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     if (!anchor) {
       throw new IOMError('Не найдены ответы в базе данных на данную тему')
     }
-    log('Выбрали: ' + anchor.getAttribute('title')
-      .trim())
+    log('Выбрали: ' + anchor.getAttribute('title').trim())
     linkToAnswersFinal = SEARCH_URL + anchor.getAttribute('href')
 
     // console.log('ССЫЛКА на ОТВЕТЫ:\n', linkToAnswersFinal)

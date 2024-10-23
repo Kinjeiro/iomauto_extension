@@ -35,12 +35,13 @@ function startExecute(mapResult) {
     // const questionEl = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-title > div')
     const questionEl = document.querySelector('.question-title-text')
     if (!questionEl) {
+      debugger
       throw new IOMError('Неправильная верстка блока вопросов')
     }
     const question = questionEl.textContent
 
     if (prevQuestion !== question) {
-      // todo @ANKU @LOW - так как таймер 2000 результат может не успеть поставится и запускается поврно
+      // todo @ANKU @LOW - так как таймер 2000 результат может не успеть поставится и запускается повторно
       log('Вопрос ' + pageQuestionNumber + ': ', question)
     }
 
@@ -145,10 +146,13 @@ function startExecute(mapResult) {
 
     if (!hasAnyAnswer) {
       const manualAnswers = prompt(
-        'На вопрос:\n' + question
-        + '\nне найден ответы. Выберите сами '
-        + (isMultiple ? 'НЕСКОЛЬКО (через пробел) номеров ответов' : 'ОДИН номер ответ') + ':\n\n'
-        + Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n'),
+        `НЕ НАЙДЕН ответ на вопрос:
+"${question}"
+
+Возможно ответов на весь тест сейчас вообще НЕТ в базе данных.
+Можете попробовать сами выбрать ${isMultiple ? 'НЕСКОЛЬКО (через пробел) номеров ответов' : 'ОДИН номер ответа'}:
+
+${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n')}`,
         // default
         isMultiple ? '1 2' : '1',
       )
