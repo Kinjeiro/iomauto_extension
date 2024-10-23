@@ -29,6 +29,10 @@
     {
       "js": [
         "./src/constants.js",
+        "./src/inject/utils.js",
+        "./src/inject/normalize.js",
+        "./src/inject/search-answers.js",
+        "./src/inject/execute-questions.js",
         "./src/inject/content-script.js"
       ],
       "matches": ["https://*.edu.rosminzdrav.ru/quiz-wrapper/*"],
