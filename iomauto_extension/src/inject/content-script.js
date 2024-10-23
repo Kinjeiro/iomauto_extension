@@ -16,9 +16,8 @@ console.log('Start from content-scripts')
 // ======================================================
 // https://regex101.com/r/iW2yE3/1 - (.)(?=[\s\S]*\n[^\n]*\1(.)(?:[^\n]{2})*\n?(?![\s\S]))
 // AАBВEЕKКMМHНOОPРCСTТXХaаeеoоpрcсyуxх
+// noinspection NonAsciiCharacters
 const LATIN_TO_VIEW_CYRILLIC = {
-  A: "А",
-
   // (//\s+\d+.{14}(.).*)
   // '$2': 'L', $1
   'A': "А", //   913	U+0391	CE 91	Α	Greek Capital Letter Alpha
@@ -99,7 +98,6 @@ function normalizeTextCompare(str, noTrim = false) {
   return noTrim
     ? result
     : result.replaceAll(/ /g, '') // убираем пробелы
-
 }
 
 
@@ -699,46 +697,52 @@ async function runSearchAnswers() {
   }
 }
 
-window.onload = function() {
-  // можно также использовать window.addEventListener('load', (event) => {
+function init() {
+  log('init')
 
   // use null-safe operator since chrome.runtime
   // is lazy inited and might return undefined
-  setTimeout(() => {
-    if (chrome.runtime?.id && chrome.storage?.sync) {
-      log('start from onload')
-      // сначала нужно сбросить background статус
+  if (chrome.runtime?.id && chrome.storage?.sync) {
+    // сначала нужно сбросить background статус c прошлого раза
+    chrome.storage.sync.set({
+      moduleStatus: MODULE_STATUS.START_SERVICE,
+      error: undefined,
+    })
+
+    setTimeout(() => {
       chrome.storage.sync.set({
-        moduleStatus: MODULE_STATUS.START_SERVICE,
+        moduleStatus: MODULE_STATUS.NEW,
         error: undefined,
       })
-
-      setTimeout(() => {
-        chrome.storage.sync.set({
-          moduleStatus: MODULE_STATUS.NEW,
-          error: undefined,
-        })
-      }, 500)
-    }
-  }, 1000)
+    }, 500)
+  } else {
+    // если background еще не готов РЕКУРСИВНО подождем еще
+    setTimeout(init, 1000)
+  }
 }
+window.onload = function() {
+  // можно также использовать window.addEventListener('load', (event) => {
+  log('start from onload')
+  init()
+}
+
 // window.addEventListener("unload", function() {
 //   // navigator.sendBeacon("/analytics", JSON.stringify(analyticsData));
 //   chrome.storage.sync.set({
 //     moduleStatus: MODULE_STATUS.NEW,
 //   })
 // })
-window.onbeforeunload = function() {
-  if (chrome.runtime?.id) {
-    log('start from onbeforeunload')
-    chrome.storage.sync.set({
-      // moduleStatus: MODULE_STATUS.NEW,
-      moduleStatus: MODULE_STATUS.START_SERVICE,
-      error: undefined,
-    })
-  }
-  return false
-}
+// window.onbeforeunload = function() {
+//   if (chrome.runtime?.id) {
+//     log('start from onbeforeunload')
+//     chrome.storage.sync.set({
+//       // moduleStatus: MODULE_STATUS.NEW,
+//       moduleStatus: MODULE_STATUS.START_SERVICE,
+//       error: undefined,
+//     })
+//   }
+//   return false
+// }
 
 function errorWrapper(func) {
   return async () => {
@@ -781,7 +785,7 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
 
       case MODULE_STATUS.EXECUTING:
         const answerDelay = prompt(
-          'Выберите диапазон случайно задержи между ответами, в секундах (минимально 2 секунды)\n(Нажмите Enter чтобы оставить предложенный)',
+          'Выберите диапазон случайно задержи между ответами, в секундах (минимально 2 секунды)\n(Нажмите Enter чтобы оставить РЕКОМЕНДОВАННЫЕ 6-11 секунд)',
           '6-11',
         )
         const [min, max] = answerDelay.replaceAll(/ /g, '').split('-')

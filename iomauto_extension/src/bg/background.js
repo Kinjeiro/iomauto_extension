@@ -46,10 +46,10 @@ console.log('Start background script')
 // ======================================================
 // STORAGE
 // ======================================================
-chrome.storage?.sync?.set({
-  moduleStatus: MODULE_STATUS.START_SERVICE,
-  error: undefined,
-})
+// chrome.storage?.sync?.set({
+//   moduleStatus: MODULE_STATUS.START_SERVICE,
+//   error: undefined,
+// })
 
 // ======================================================
 // STORAGE CHANGED
