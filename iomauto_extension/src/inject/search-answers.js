@@ -75,7 +75,7 @@ function answersParsing(doc = document) {
 const SEARCH_MATCHES = [
   // 1) убираем год - так как часто 2021 в базе ответов нет
   // -2021
-  (searchTerm) => searchTerm.replaceAll(/\s?-?\s?\d{4}$/gi, ''),
+  // (searchTerm) => searchTerm.replaceAll(/\s?-?\s?\d{4}$/gi, ''),
 
   // 2)
   // Недержание мочи (по утвержденным клиническим рекомендациям)-2020
@@ -153,6 +153,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
         log('Найдены темы в базе данных:')
         anchors.forEach((findLink, index) => {
           const linkTitle = findLink.getAttribute('title')
+            .replaceAll('Тест с ответами по теме', '')
             .trim()
           // anchorAll.push(findLink)
           // anchorAllTitles.push(linkTitle)
@@ -165,9 +166,11 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
 
             // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
             // log('Сравниваем\n',normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certNameFinal))
-            if (normalizeTextCompare(linkTitle) === normalizeTextCompare(certNameFinal)) {
+            if (normalizeTextCompare(linkTitle) === normalizeTextCompare(certName)) {
               foundLinks.push(findLink)
               anchorPosition = Object.keys(anchorAllMap).length
+            } else {
+              log('Сравнение\n', normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certName))
             }
           }
         })
