@@ -62,14 +62,14 @@ function startExecute(mapResult) {
     }
 
     const testAnswer = (getEl, checkedClassName) => {
-      const el = getEl()
-      const isChecked = el.className.indexOf(checkedClassName) >= 0
+      const isChecked = getEl().className.indexOf(checkedClassName) >= 0
+      const getSpan = () => getEl().querySelector('span')
+
       // подходит как для множества так и для одно элемента
-      const spanEl = el.querySelector('span')
-      const answerFromPage = spanEl.textContent
+      const answerFromPage = getSpan().textContent
 
       // нужно каждый раз заново искать дом
-      pageAnswersMap[answerFromPage] = () => getEl().querySelector('span')
+      pageAnswersMap[answerFromPage] = getSpan
 
       if (isChecked) {
         hasAnyAnswer = true
@@ -87,20 +87,21 @@ function startExecute(mapResult) {
           if (typeof findAnswers === 'undefined' || findAnswers.length === 0 || findAnswers[0].length === 0) {
             // нету ответов - выбираем первый результат
             hasAnyAnswer = true
-            setTimeout(() => spanEl.click(), 100)
+            setTimeout(() => getSpan().click(), 100)
             return true
           }
         }
         const result = findAnswers?.some((answersVariant, variantIndex) => {
           return answersVariant.some((answer) => {
             const isCorrect = compareAnswer(answer, answerFromPage)
+            // logDebug('isCorrect', isCorrect, pageQuestionNumber, randomOneMistakeNumber)
             if (
               // если нужно сделать ошибку, то выбираем неправильный вариант для клика
               pageQuestionNumber === randomOneMistakeNumber && !isCorrect
               || isCorrect
             ) {
               hasAnyAnswer = true
-              spanEl.click()
+              getSpan().click()
               return true
             }
           })
@@ -165,7 +166,8 @@ ${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n
             Object.keys(pageAnswersMap).forEach((title, index) => {
               if (index === (manualIndexPlus - 1)) {
                 // вызываем поиск элемента, так как если их много дом каждый раз меняется
-                pageAnswersMap[title]().click()
+                const getSpanInner = pageAnswersMap[title]
+                getSpanInner().click()
                 hasAnyAnswer = true
               }
             })

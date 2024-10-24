@@ -1,6 +1,9 @@
 function log(msg, ...args) {
   console.log(msg, ...args)
 }
+function logDebug(msg, ...args) {
+  console.log('DEBUG: ', msg, ...args)
+}
 
 function logError(msg, ...args) {
   console.error(msg, ...args)
@@ -39,6 +42,7 @@ async function fetchFromExtension(url) {
           } = okData
           resolve(body)
         } else {
+          // todo @ANKU @LOW - иногда долго сайт отвечает, сделать оповещение и запустить еще раз
           reject(error)
         }
       },
@@ -51,8 +55,11 @@ function getRandomInt(min, max) {
 }
 
 class IOMError extends Error {
+  errorMsg
   constructor(message, ...otherArgs) {
     super(message);
+    // todo @LOW - почему-то .message возвращает undefined
+    this.errorMsg = message
     this.otherArgs = otherArgs;
   }
 }
