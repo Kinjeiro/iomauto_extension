@@ -127,8 +127,7 @@ function errorWrapper(func) {
       console.log('ОШИБКА ЗАПУСКА:\n', e)
       chrome.storage.sync.set({
         moduleStatus: MODULE_STATUS.ERROR,
-        // todo @ANKU @LOW - почему-то ошибка не обновляется proxy?
-        error: e.message,
+        error: e instanceof IOMError ? e.errorMsg : e.message,
       })
     }
   }
