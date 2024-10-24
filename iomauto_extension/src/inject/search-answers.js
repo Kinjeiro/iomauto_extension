@@ -75,7 +75,9 @@ function answersParsing(doc = document) {
 const SEARCH_MATCHES = [
   // 1) убираем год - так как часто 2021 в базе ответов нет
   // -2021
-  // (searchTerm) => searchTerm.replaceAll(/\s?-?\s?\d{4}$/gi, ''),
+  (searchTerm) => searchTerm
+    .replaceAll(/["«»]/gi, '') // c " на сайте плохо ищется
+    .replaceAll(/\s?-?\s?\d{4}$/gi, ''),
 
   // 2)
   // Недержание мочи (по утвержденным клиническим рекомендациям)-2020
@@ -94,6 +96,7 @@ const SEARCH_MATCHES = [
   // Доброкачественная гиперплазия предстательной железы (по утвержденным клиническим рекомендациям) - 2024
   // Доброкачественная гиперплазия предстательной железы. Взрослые (по утвержденным клиническим рекомендациям) - 2024
   (searchTerm) => normalizeTextCompare(searchTerm, true)
+    .replaceAll(/""«»/gi, '')
     .substring(0, 45)
     // обрезаем последнее слово, так как оно может быть неполным
     .replaceAll(/\s([^\s]*)$/gi, ''),
@@ -151,9 +154,13 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
       if (anchors.length) {
         log('Найдены темы в базе данных:')
         anchors.forEach((findLink, index) => {
-          const linkTitle = findLink.getAttribute('title')
+          // todo @ANKU @LOW @BUG_OUT - Оказывается на сайте https://24forcare.com/ было недавно обновление и они что-то делали с кавычками и забыли экранировать их поэтому теперь у них title не валидный
+          // const linkTitle = findLink.getAttribute('title')
+          const linkTitle = findLink.text
             .replaceAll('Тест с ответами по теме', '')
             .trim()
+            .replaceAll(/[«»]/g, '')
+
           // anchorAll.push(findLink)
           // anchorAllTitles.push(linkTitle)
           const hasAlreadyThisName = anchorAllMap[linkTitle]
