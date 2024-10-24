@@ -125,11 +125,10 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
     const anchorAllMap = {}
     // const anchorAll = []
     // const anchorAllTitles = []
-    let anchor
     let anchorPosition
     let prevSearch = certName
 
-    for (let i = 0; !anchor && i < SEARCH_MATCHES.length; i++) {
+    for (let i = 0; !anchorPosition && i < SEARCH_MATCHES.length; i++) {
       const matcher = SEARCH_MATCHES[i]
 
       const certNameFinal = matcher(certName, prevSearch)
@@ -164,16 +163,27 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
             anchorAllMap[linkTitle] = findLink
             log((index + 1) + ') ' + linkTitle)
 
+            const linkHash = normalizeTextCompare(linkTitle)
+            const shortTitleHash = normalizeTextCompare(certNameFinal)
+            const fullTitleHash = normalizeTextCompare(certName)
             // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
             // log('Сравниваем\n',normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certNameFinal))
-            if (normalizeTextCompare(linkTitle) === normalizeTextCompare(certName)) {
+            if (linkHash.indexOf(shortTitleHash) >= 0) {
+              // убрали год и есть ли похожие
               foundLinks.push(findLink)
-              anchorPosition = Object.keys(anchorAllMap).length
+
+              if (linkHash === fullTitleHash) {
+                // проставляем только если точное совпадение вместе с годом
+                anchorPosition = Object.keys(anchorAllMap).length
+              }
             } else {
-              log('Сравнение\n', normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certName))
+              // log('Сравнение\n', linkHash, '\n', fullTitleHash)
             }
+          } else {
+            log('Уже такая тема есть')
           }
         })
+
         if (foundLinks.length === 0) {
           log('... НЕ ПОДОШЛИ ОТВЕТЫ ... для\n', normalizeTextCompare(certNameFinal))
         }
@@ -194,17 +204,19 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
 
       // anchor = foundLinks[0]
       // anchor = foundLinks[foundLinks.length - 1]
-      if (foundLinks.length > 1) {
+      if (foundLinks.length >= 1 || anchors.length) {
+        // что-то нашлось, прерываем поиск
+        // ИЛИ ответы были найдены, но ни один не подошел.
+        // Можно заканчивать искать, так как поиски идут от более конкретного к аюстрактному
         break
-      } else if (foundLinks.length === 1) {
-        anchor = foundLinks[0]
       }
+
       prevSearch = certNameFinal
     }
 
     // если было несколько вариантов или не найден
     const anchorAllTitles = Object.keys(anchorAllMap)
-    if (!anchor && anchorAllTitles.length) {
+    if (!anchorPosition && anchorAllTitles.length) {
       const userChoice = prompt(
         `ВНИМАНИЕ! Точной темы НЕ НАЙДЕНО в базе ответов!\n
 Можете попробовать выбрать один из похожих, НО там может не быть некоторых ответов:\n
@@ -217,18 +229,24 @@ ${
       )
 
       if (userChoice) {
-        // index = position - 1
-        anchor = anchorAllMap[anchorAllTitles[parseInt(userChoice, 10) - 1]]
+        anchorPosition = parseInt(userChoice, 10)
       }
     }
 
-    if (!anchor) {
+    if (!anchorPosition) {
+      alert('К сожалению, на данную тему сейчас НЕ НАШЛОСЬ ответов в базе данных\n\n' +
+        'Если на сайте 24forcare.com есть такая тема, пожалуйста,\n' +
+        'сообщите нам в группу https://t.me/iomauto\n' +
+        'Возможно ошибка в самом плагине и мы постараемся его починить')
+
       throw new IOMError('Не найдены ответы в базе данных на данную тему')
     }
+
+    // index = position - 1
+    const anchor = anchorAllMap[anchorAllTitles[anchorPosition - 1]]
     log('Выбрали: ' + anchor.getAttribute('title').trim())
     linkToAnswersFinal = SEARCH_URL + anchor.getAttribute('href')
 
-    // console.log('ССЫЛКА на ОТВЕТЫ:\n', linkToAnswersFinal)
     log('ССЫЛКА на ОТВЕТЫ:\n', anchor.getAttribute('href'))
   }
 
