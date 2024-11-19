@@ -137,7 +137,7 @@ const runSearchAnswersWrapper = errorWrapper(runSearchAnswers)
 const runSearchQAFormWrapper = errorWrapper(runSearchQAForm)
 
 chrome.storage.sync.onChanged.addListener(async (changes) => {
-  await errorWrapper(() => {
+  await errorWrapper(async () => {
     console.log('cs: changed: ', changes)
 
     switch (changes?.moduleStatus?.newValue) {
@@ -165,7 +165,7 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
         log('Задержка между ответами от ', answerDelayMin, ' до ', answerDelayMax)
 
         log('Подстановка значений...')
-        startExecute(finalMapResult)
+          startExecute(finalMapResult)
         break
     }
   })()

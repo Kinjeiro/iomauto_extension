@@ -7,7 +7,6 @@ function logDebug(msg, ...args) {
 
 function logError(msg, ...args) {
   console.error(msg, ...args)
-  // todo @ANKU @CRIT @MAIN - добавить нотификации
 }
 
 function logErrorNotification(error, ...args) {

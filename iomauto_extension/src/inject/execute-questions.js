@@ -204,9 +204,9 @@ ${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n
 
     return false
   }
-  async function checkAnswerWrapper() {
+  function checkAnswerWrapper() {
     try {
-      const isEnd = await checkAnswer()
+      const isEnd = checkAnswer()
       if (!isEnd) {
         // todo @ANKU @LOW - вынеси это в настройки
         // запускаем проверку еще раз пока не дойдем до последней кнопки

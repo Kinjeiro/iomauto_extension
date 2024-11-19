@@ -8,6 +8,10 @@
 // }
 
 
+const manifestData = chrome.runtime.getManifest();
+const VERSION = manifestData.version
+
+
 async function getCurrentTab() {
   let queryOptions = {
     active: true,
@@ -84,11 +88,12 @@ async function updateBadge(moduleStatusValue, error) {
     tabId,
   }, (result) => {
     if (result || !!title) {
+      const titleWithVersion = `(v${VERSION}) ${title}`
       // нельзя ставить null если текста не было
       chrome.action.setTitle({
         title: moduleStatusValue === MODULE_STATUS.ERROR
-          ? `${title}: ${error}`
-          : title,
+          ? `${titleWithVersion}: ${error}`
+          : titleWithVersion,
         tabId,
       })
     }
@@ -145,8 +150,14 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
     error,
   } = changes || {}
 
-  if (moduleStatus?.newValue) {
-    await updateBadge(moduleStatus.newValue, error?.newValue)
+  if (moduleStatus?.newValue || error?.newValue) {
+    // если значение другое значение не поменялось, то его не будет в changes - нужно получить
+    chrome.storage.sync.get(({
+      moduleStatus,
+      error,
+    }) => {
+      updateBadge(moduleStatus?.newValue || moduleStatus, error?.newValue || error)
+    })
   }
 })
 
