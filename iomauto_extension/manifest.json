@@ -1,7 +1,7 @@
 {
   "name": "Автоматическое решение Интерактивных Образовательных Модулей (ИОМ)",
   "short_name": "iomauto",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "manifest_version": 3,
   "description": "Автоматическое решение Интерактивных Образовательных Модулей (ИОМ) для системы сертификации.",
   "homepage_url": "https://t.me/iomauto",
@@ -23,7 +23,8 @@
   "host_permissions": [
     "https://*.edu.rosminzdrav.ru/*",
     "https://*.edu.rosminzdrav.ru/quiz-wrapper/*",
-    "https://24forcare.com/*"
+    "https://24forcare.com/*",
+    "https://reshnmo.ru/*"
   ],
   "content_scripts": [
     {

@@ -86,7 +86,7 @@ function startExecute(mapResult) {
         if (pageQuestionNumber === randomOneMistakeNumber) {
           if (typeof findAnswers === 'undefined' || findAnswers.length === 0 || findAnswers[0].length === 0) {
             // нету ответов - выбираем первый результат
-            hasAnyAnswer = true
+            hasAnyAnswer = getSpan
             setTimeout(() => getSpan().click(), 100)
             return true
           }
@@ -100,7 +100,8 @@ function startExecute(mapResult) {
               pageQuestionNumber === randomOneMistakeNumber && !isCorrect
               || isCorrect
             ) {
-              hasAnyAnswer = true
+              hasAnyAnswer = getSpan
+              // todo @ANKU @CRIT @MAIN - не всегда проставляет - при переключении фокуса
               getSpan().click()
               return true
             }
@@ -192,6 +193,17 @@ ${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n
         //pageQuestionNumber += 1
 
         setTimeout(() => {
+          // todo @ANKU @LOW - не нравится - двойной клик идет всегда и у всех
+          // if (typeof hasAnyAnswer === 'function') {
+          //   // из-за потери фокуса бывает не проставляется значение, выделим еще раз
+          //   // todo @ANKU @LOW - не учитывает множественные выбор
+          //   // getSpan
+          //   hasAnyAnswer().click?.()
+          // }
+          // // чтобы успел обновиться и проставится ответ
+          // setTimeout
+
+          // todo @ANKU @CRIT @MAIN - проверить если выделение, если нет то еще раз выделить
           buttonApplyEl.click()
 
           if (prevQuestion !== question) {

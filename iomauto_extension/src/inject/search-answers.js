@@ -6,19 +6,82 @@
 // 'https://24forcare.com/search/?query=%D0%9E%D1%81%D1%82%D1%80%D1%8B%D0%B9+%D0%BA%D0%BE%D1%80%D0%BE%D0%BD%D0%B0%D1%80%D0%BD%D1%8B%D0%B9+%D1%81%D0%B8%D0%BD%D0%B4%D1%80%D0%BE%D0%BC+%D0%B1%D0%B5%D0%B7+%D0%BF%D0%BE%D0%B4%D1%8A%D0%B5%D0%BC%D0%B0+%D1%81%D0%B5%D0%B3%D0%BC%D0%B5%D0%BD%D1%82%D0%B0+ST+%D1%8D%D0%BB%D0%B5%D0%BA%D1%82%D1%80%D0%BE%D0%BA%D0%B0%D1%80%D0%B4%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D1%8B+%28%D0%BF%D0%BE+%D1%83%D1%82%D0%B2%D0%B5%D1%80%D0%B6%D0%B4%D0%B5%D0%BD%D0%BD%D1%8B%D0%BC+%D0%BA%D0%BB%D0%B8%D0%BD%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%BC+%D1%80%D0%B5%D0%BA%D0%BE%D0%BC%D0%B5%D0%BD%D0%B4%D0%B0%D1%86%D0%B8%D1%8F%D0%BC%29'
 const SEARCH_URL = 'https://24forcare.com/'
 
-function answersParsing(doc = document) {
+const SEARCH_SITES = [
+  {
+    /*
+    https://reshnmo.ru/?s=%D0%BE%D1%81%D1%82%D1%80%D1%8B%D0%B9+%D0%B3%D0%B5%D0%BF%D0%B0%D1%82%D0%B8%D1%82+%D0%92
+
+    document.querySelectorAll('.post-card__title a')
+
+    https://reshnmo.ru/testy-nmo/test-s-otvetami-po-teme-ostryy-gepatit-v-ogv-u-detey-po-utverzhdennym-klinicheskim-rekomendatsiyam-testy-nmo-s-otvetami
+    .entry-content h3
+    .entry-content p strong
+    */
+    domainUrl: 'https://reshnmo.ru/',
+    getUrlTopics: (certNameFinal) => {
+      return '?' + new URLSearchParams({
+        s: certNameFinal,
+        // credentials: "include"
+      }).toString()
+    },
+    findTopicsAnchors: (searchPageDocument) => {
+      return Array.from(searchPageDocument.querySelectorAll('.post-card__title a'))
+        .map((findLink) => ({
+          fullUrl: findLink.getAttribute('href'),
+          linkTitle: findLink.text
+            .replaceAll('Тест с ответами по теме', '')
+            .replaceAll(' | Тесты НМО с ответами', '')
+            .trim()
+            .replaceAll(/[«»]/g, ''),
+        }))
+    },
+    findAnswersMap: (answersPageDocument) => {
+      // там такой же парсинг h3 + p strong
+      return answersParsing24forcare(
+        answersPageDocument.querySelector('.entry-content').childNodes
+      )
+    }
+  },
+  {
+    domainUrl: 'https://24forcare.com/',
+    getUrlTopics: (certNameFinal) => {
+      return 'search/?' + new URLSearchParams({
+        query: certNameFinal,
+        // credentials: "include"
+      }).toString()
+    },
+    findTopicsAnchors: (searchPageDocument) => {
+      return Array.from(searchPageDocument.querySelectorAll('.item-name'))
+        .map((findLink) => ({
+          fullUrl: 'https://24forcare.com/' + findLink.getAttribute('href'),
+          linkTitle: findLink.text
+            .replaceAll('Тест с ответами по теме', '')
+            .trim()
+            .replaceAll(/[«»]/g, ''),
+        }))
+    },
+    findAnswersMap: (answersPageDocument) => {
+      return answersParsing24forcare(
+        answersPageDocument.querySelector('body > section > div > div > div.col-md.mw-820').childNodes
+      )
+    }
+  },
+]
+
+
+function answersParsing24forcare(rowEls = []) {
   const mapResult = {}
   // const startElement = 10
   // const endElement = 197
   let question = ''
 
-  const rowEls = doc.querySelectorAll('body > section > div > div > div.col-md.mw-820')
+  // const rowEls = doc.querySelectorAll('body > section > div > div > div.col-md.mw-820')
   if (rowEls.length === 0) {
-    log('ОШИБКА - не найдены ответы в интернете', doc.querySelector('body > section'))
+    log('ОШИБКА - не найдены ответы в интернете')
     debugger
     throw new Error('ОШИБКА - не найдены ответы в интернете')
   } else {
-    rowEls[0].childNodes
+    rowEls
       .forEach((item, index) => {
         if (item.nodeName === 'H3') {
           // todo убрать номер вопроса
@@ -135,83 +198,105 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
       const matcher = SEARCH_MATCHES[i]
 
       const certNameFinal = matcher(certName, prevSearch)
-
       console.log('Поиск...\n', certNameFinal)
-      const htmlWithSearch = await fetchFromExtension(SEARCH_URL + 'search/?' + new URLSearchParams({
-        query: certNameFinal,
-        // credentials: "include"
-      }).toString())
-      const parserSearch = new DOMParser()
-      const docSearch = parserSearch.parseFromString(htmlWithSearch, 'text/html')
 
-      // todo @ANKU @CRIT @MAIN - todo несколько вариантов ответов
-      // const anchor = docSearch.querySelector(
-      //   '#pdopage > .rows > * > .item > .item-name')
+      let isFound = false
 
-      const anchors = docSearch.querySelectorAll('.item-name')
-      let foundLinks = []
+      for (let siteIndex = 0; siteIndex < SEARCH_SITES.length; siteIndex++) {
+        const {
+          domainUrl,
+          getUrlTopics,
+          findTopicsAnchors,
+        } = SEARCH_SITES[siteIndex]
 
-      if (anchors.length) {
-        log('Найдены темы в базе данных:')
-        anchors.forEach((findLink, index) => {
-          // todo @ANKU @LOW @BUG_OUT - Оказывается на сайте https://24forcare.com/ было недавно обновление и они что-то делали с кавычками и забыли экранировать их поэтому теперь у них title не валидный
-          // const linkTitle = findLink.getAttribute('title')
-          const linkTitle = findLink.text
-            .replaceAll('Тест с ответами по теме', '')
-            .trim()
-            .replaceAll(/[«»]/g, '')
+        console.log('Сайт - ', domainUrl)
 
-          // anchorAll.push(findLink)
-          // anchorAllTitles.push(linkTitle)
-          const hasAlreadyThisName = anchorAllMap[linkTitle]
-          if (!hasAlreadyThisName) {
-            // берем всегда первое полное совпадение, а то бывает 2 теста одинаково называются
-            // к примеру "Профилактика онкологических заболеваний"
-            anchorAllMap[linkTitle] = findLink
-            log((index + 1) + ') ' + linkTitle)
+        const htmlWithSearch = await fetchFromExtension(
+          domainUrl + getUrlTopics(certNameFinal),
+        )
+        const parserSearch = new DOMParser()
+        const docSearch = parserSearch.parseFromString(htmlWithSearch, 'text/html')
 
-            const linkHash = normalizeTextCompare(linkTitle)
-            const shortTitleHash = normalizeTextCompare(certNameFinal)
-            const fullTitleHash = normalizeTextCompare(certName)
-            // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
-            // log('Сравниваем\n',normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certNameFinal))
-            if (linkHash.indexOf(shortTitleHash) >= 0) {
-              // убрали год и есть ли похожие
-              foundLinks.push(findLink)
 
-              if (linkHash === fullTitleHash) {
-                // проставляем только если точное совпадение вместе с годом
-                anchorPosition = Object.keys(anchorAllMap).length
+        // todo @ANKU @CRIT @MAIN - todo несколько вариантов ответов
+        // const anchor = docSearch.querySelector(
+        //   '#pdopage > .rows > * > .item > .item-name')
+
+        const anchors = findTopicsAnchors(docSearch)
+        let foundLinks = []
+
+        if (anchors.length) {
+          log('Найдены темы в базе данных:')
+          anchors.forEach(({ linkTitle, fullUrl }, index) => {
+            // const linkTitle = findLink.getAttribute('title')
+
+            // anchorAll.push(findLink)
+            // anchorAllTitles.push(linkTitle)
+            const hasAlreadyThisName = anchorAllMap[linkTitle]
+            if (!hasAlreadyThisName) {
+              // берем всегда первое полное совпадение, а то бывает 2 теста одинаково называются
+              // к примеру "Профилактика онкологических заболеваний"
+              anchorAllMap[linkTitle] = fullUrl
+              log((index + 1) + ') ' + linkTitle)
+
+              const linkHash = normalizeTextCompare(linkTitle)
+              const shortTitleHash = normalizeTextCompare(certNameFinal)
+              const fullTitleHash = normalizeTextCompare(certName)
+              // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
+              // log('Сравниваем\n',normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certNameFinal))
+              if (linkHash.indexOf(shortTitleHash) >= 0) {
+                // убрали год и есть ли похожие
+                foundLinks.push(fullUrl)
+
+                if (linkHash === fullTitleHash) {
+                  // проставляем только если точное совпадение вместе с годом
+                  anchorPosition = Object.keys(anchorAllMap).length
+                }
+              } else {
+                // log('Сравнение\n', linkHash, '\n', fullTitleHash)
               }
             } else {
-              // log('Сравнение\n', linkHash, '\n', fullTitleHash)
+              log('Уже такая тема есть')
             }
-          } else {
-            log('Уже такая тема есть')
-          }
-        })
+          })
 
-        if (foundLinks.length === 0) {
-          log('... НЕ ПОДОШЛИ ОТВЕТЫ ... для\n', normalizeTextCompare(certNameFinal))
+          if (foundLinks.length === 0) {
+            log('... НЕ ПОДОШЛИ ОТВЕТЫ ... для\n', normalizeTextCompare(certNameFinal))
+          }
+        } else {
+          log('... НЕ НАЙДЕНО ...')
         }
-      } else {
-        log('... НЕ НАЙДЕНО ...')
+
+        /*
+          получилось так что есть 2020 варианты и просто без даты. И нужно как-то понять чтобы брать второй
+
+          1) Тест с ответами по теме «Плоскоклеточный рак анального канала, анального края, перианальной кожи (по утвержденным клиническим рекомендациям)_2020»
+          2) Тест с ответами по теме «Плоскоклеточный рак анального канала, анального края, перианальной кожи (по утвержденным клиническим рекомендациям)»
+          Выбрали: Тест с ответами по теме «Плоскоклеточный рак анального канала, анального края, перианальной кожи (по утвержденным клиническим рекомендациям)_2020»
+
+          В качестве временного решения могу предложить брать последний вариант, так как чаше нужно более новые тесты
+        */
+        // todo @ANKU @LOW - в будущем давать выбор пользователю
+
+        // anchor = foundLinks[0]
+        // anchor = foundLinks[foundLinks.length - 1]
+        if (typeof anchorPosition !== 'undefined') {
+          // точно нашлось
+          isFound = true
+          break
+        }
+        // if (foundLinks.length > 1 || anchors.length) {
+        //   // что-то нашлось, прерываем поиск
+        //   // ИЛИ ответы были найдены, но ни один не подошел.
+        //   // Можно заканчивать искать, так как поиски идут от более конкретного к аюстрактному
+        //   break
+        // }
       }
 
-      /*
-        получилось так что есть 2020 варианты и просто без даты. И нужно как-то понять чтобы брать второй
-
-        1) Тест с ответами по теме «Плоскоклеточный рак анального канала, анального края, перианальной кожи (по утвержденным клиническим рекомендациям)_2020»
-        2) Тест с ответами по теме «Плоскоклеточный рак анального канала, анального края, перианальной кожи (по утвержденным клиническим рекомендациям)»
-        Выбрали: Тест с ответами по теме «Плоскоклеточный рак анального канала, анального края, перианальной кожи (по утвержденным клиническим рекомендациям)_2020»
-
-        В качестве временного решения могу предложить брать последний вариант, так как чаше нужно более новые тесты
-      */
-      // todo @ANKU @LOW - в будущем давать выбор пользователю
-
-      // anchor = foundLinks[0]
-      // anchor = foundLinks[foundLinks.length - 1]
-      if (foundLinks.length >= 1 || anchors.length) {
+      if (isFound) {
+        break;
+      }
+      if (Object.keys(anchorAllMap)) {
         // что-то нашлось, прерываем поиск
         // ИЛИ ответы были найдены, но ни один не подошел.
         // Можно заканчивать искать, так как поиски идут от более конкретного к аюстрактному
@@ -242,7 +327,8 @@ ${
 
     if (!anchorPosition) {
       alert('К сожалению, на данную тему сейчас НЕ НАШЛОСЬ ответов в базе данных\n\n' +
-        'Если на сайте 24forcare.com есть такая тема, пожалуйста,\n' +
+        // 'Если на сайте ' + domainUrl + ' есть такая тема, пожалуйста,\n' +
+        'Если найдете на сайтах ответы, пожалуйста,\n' +
         'сообщите нам в группу https://t.me/iomauto\n' +
         'Возможно ошибка в самом плагине и мы постараемся его починить')
 
@@ -250,11 +336,10 @@ ${
     }
 
     // index = position - 1
-    const anchor = anchorAllMap[anchorAllTitles[anchorPosition - 1]]
-    log('Выбрали: ' + anchor.getAttribute('title').trim())
-    linkToAnswersFinal = SEARCH_URL + anchor.getAttribute('href')
-
-    log('ССЫЛКА на ОТВЕТЫ:\n', anchor.getAttribute('href'))
+    log('Выбрали: ' + anchorAllTitles[anchorPosition - 1])
+    const fullUrl = anchorAllMap[anchorAllTitles[anchorPosition - 1]]
+    linkToAnswersFinal = fullUrl
+    log('ССЫЛКА на ОТВЕТЫ:\n', fullUrl)
   }
 
   // const htmlWithAnswers = await (await fetchFromExtension(linkToAnswersFinal)).text()
@@ -262,5 +347,8 @@ ${
   const parser2 = new DOMParser()
   const docAnswers = parser2.parseFromString(htmlWithAnswers, 'text/html')
 
-  return answersParsing(docAnswers)
+  const siteEngine = SEARCH_SITES.find(({ domainUrl }) =>
+    linkToAnswersFinal.indexOf(domainUrl) === 0)
+  // return answersParsing(docAnswers)
+  return siteEngine.findAnswersMap(docAnswers)
 }
