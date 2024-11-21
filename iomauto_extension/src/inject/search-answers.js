@@ -251,9 +251,11 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
                 if (linkHash === fullTitleHash) {
                   // проставляем только если точное совпадение вместе с годом
                   anchorPosition = Object.keys(anchorAllMap).length
+                } else {
+                  log('Сравнение не полное\n', linkHash, linkHash.length, '\n', fullTitleHash, fullTitleHash.length)
                 }
               } else {
-                // log('Сравнение\n', linkHash, '\n', fullTitleHash)
+                log('Сравнение не короткое\n', linkHash, linkHash.length, '\n', shortTitleHash, shortTitleHash.length)
               }
             } else {
               log('Уже такая тема есть')
