@@ -192,6 +192,20 @@ ${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n
         //buttonApplyEl.click()
         //pageQuestionNumber += 1
 
+        if (typeof hasAnyAnswer === 'function') {
+          // из-за потери фокуса бывает не проставляется значение, выделим еще раз
+          const parentClass = hasAnyAnswer().parentNode?.parentNode?.parentNode?.getAttribute('class')
+          const isCheck = parentClass && (
+            parentClass.indexOf('mat-mdc-checkbox-checked') >= 0
+            || parentClass.indexOf('mat-mdc-radio-checked') >= 0
+          )
+
+          if (!isCheck) {
+            // еще раз проверим и проставим ответ
+            return false
+          }
+        }
+
         setTimeout(() => {
           // todo @ANKU @LOW - не нравится - двойной клик идет всегда и у всех
           // if (typeof hasAnyAnswer === 'function') {
@@ -214,6 +228,7 @@ ${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n
       }
     }
 
+    // повторяем поиск
     return false
   }
   function checkAnswerWrapper() {
@@ -232,7 +247,7 @@ ${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n
         })
       }
     } catch (e) {
-      logErrorNotification(e.message, ...(e.otherArgs || []))
+      logErrorNotification(e.message, e, ...(e.otherArgs || []))
     }
   }
 
