@@ -25,7 +25,7 @@ const SEARCH_SITES = [
       }).toString()
     },
     findTopicsAnchors: (searchPageDocument) => {
-      return Array.from(searchPageDocument.querySelectorAll('.post-card__title a'))
+      return Array.from(searchPageDocument.querySelectorAll('.post-card--standard .post-card__title a'))
         .map((findLink) => ({
           fullUrl: findLink.getAttribute('href'),
           linkTitle: findLink.text
@@ -153,7 +153,8 @@ const SEARCH_MATCHES = [
   // 3) заменяем все англицизмы, убираем скобки и символы
   //
   //
-  (searchTerm, prevTerm) => normalizeTextCompare(prevTerm, true),
+  (searchTerm, prevTerm) => normalizeTextCompare(prevTerm, true)
+    .replaceAll('по клиническим рекомендациям', ''),
 
   // 3) "Взрослые" в ответах, а в вопросе уже нет
   // Доброкачественная гиперплазия предстательной железы (по утвержденным клиническим рекомендациям) - 2024
@@ -198,7 +199,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
       const matcher = SEARCH_MATCHES[i]
 
       const certNameFinal = matcher(certName, prevSearch)
-      console.log('Поиск...\n', certNameFinal)
+      log('Поиск...\n', certNameFinal)
 
       let isFound = false
 
@@ -209,11 +210,11 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
           findTopicsAnchors,
         } = SEARCH_SITES[siteIndex]
 
-        console.log('Сайт - ', domainUrl)
+        log('Сайт - ', domainUrl)
 
-        const htmlWithSearch = await fetchFromExtension(
-          domainUrl + getUrlTopics(certNameFinal),
-        )
+        const searchUrl = domainUrl + getUrlTopics(certNameFinal)
+        log(searchUrl)
+        const htmlWithSearch = await fetchFromExtension(searchUrl)
         const parserSearch = new DOMParser()
         const docSearch = parserSearch.parseFromString(htmlWithSearch, 'text/html')
 
@@ -298,7 +299,7 @@ async function searchAnswers(certName, linkToAnswers = undefined) {
       if (isFound) {
         break;
       }
-      if (Object.keys(anchorAllMap)) {
+      if (Object.keys(anchorAllMap).length > 0) {
         // что-то нашлось, прерываем поиск
         // ИЛИ ответы были найдены, но ни один не подошел.
         // Можно заканчивать искать, так как поиски идут от более конкретного к аюстрактному
