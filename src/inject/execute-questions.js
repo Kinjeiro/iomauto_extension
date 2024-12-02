@@ -1,3 +1,8 @@
+import { getConfig, MODULE_STATUS } from '../constants'
+import { normalizeTextCompare } from './normalize'
+import { getRandomInt, IOMError, log, logError, logErrorNotification } from './utils'
+
+
 function compareAnswer(inputDataStr, pageStr) {
   // могут быть не заглавные, могут быть запятые лишние в конце
   // поэтому обрежем в конце
@@ -14,7 +19,7 @@ function compareAnswer(inputDataStr, pageStr) {
   return normalizeTextCompare(pageStr) === normalizeTextCompare(inputDataStr)
 }
 
-function startExecute(mapResult) {
+export function startExecute(mapResult) {
   // todo ограничение на 10000
   // const input =  window.prompt('JSON c ответами')
   // const mapResult = JSON.parse(input)
@@ -235,6 +240,10 @@ ${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n
     try {
       const isEnd = checkAnswer()
       if (!isEnd) {
+        const {
+          answerDelayMin,
+          answerDelayMax,
+        } = getConfig()
         // todo @ANKU @LOW - вынеси это в настройки
         // запускаем проверку еще раз пока не дойдем до последней кнопки
         const randomAnswerDelay = getRandomInt(answerDelayMin, answerDelayMax)

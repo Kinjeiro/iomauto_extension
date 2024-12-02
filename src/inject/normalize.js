@@ -4,7 +4,7 @@
 // https://regex101.com/r/iW2yE3/1 - (.)(?=[\s\S]*\n[^\n]*\1(.)(?:[^\n]{2})*\n?(?![\s\S]))
 // AАBВEЕKКMМHНOОPРCСTТXХaаeеoоpрcсyуxх
 // noinspection NonAsciiCharacters
-const LATIN_TO_VIEW_CYRILLIC = {
+export const LATIN_TO_VIEW_CYRILLIC = {
   // (//\s+\d+.{14}(.).*)
   // '$2': 'L', $1
   'A': 'А', //   913	U+0391	CE 91	Α	Greek Capital Letter Alpha
@@ -75,14 +75,14 @@ const LATIN_TO_VIEW_CYRILLIC = {
   'ͯ': 'х', // 879	U+036F	CD AF	ͯ	Combining Latin Small Letter X
 }
 
-function latinToViewCyrillic(input) {
+export function latinToViewCyrillic(input) {
   return input.split('')
     .map(char => LATIN_TO_VIEW_CYRILLIC[char] || char)
     .join('')
 }
 // globalThis.latinToViewCyrillic = latinToViewCyrillic
 
-function normalizeTextCompare(str, noTrim = false) {
+export function normalizeTextCompare(str, noTrim = false) {
   const result = latinToViewCyrillic(str)
     .toLocaleLowerCase() // приводим к нижнему регистру
     .replaceAll(/[=+!?'"«»,.()\[\]\-—_:\t​]/g, '') // убираем спец символы

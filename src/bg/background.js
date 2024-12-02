@@ -7,6 +7,8 @@
 //   console.error(e);
 // }
 
+import { MODULE_STATUS } from '../constants'
+
 
 const manifestData = chrome.runtime.getManifest();
 const VERSION = manifestData.version
@@ -24,16 +26,16 @@ async function getCurrentTab() {
 
 
 
-export const MODULE_STATUS = {
-  START_SERVICE: 'START_SERVICE',
-  NEW: 'NEW',
-  SEARCHING: 'SEARCH',
-  WAIT_QA_FORM: 'WAIT_QA_FORM',
-  READY: 'READY',
-  EXECUTING: 'EXECUTING',
-  DONE: 'DONE',
-  ERROR: 'ERROR',
-}
+// export const MODULE_STATUS = {
+//   START_SERVICE: 'START_SERVICE',
+//   NEW: 'NEW',
+//   SEARCHING: 'SEARCH',
+//   WAIT_QA_FORM: 'WAIT_QA_FORM',
+//   READY: 'READY',
+//   EXECUTING: 'EXECUTING',
+//   DONE: 'DONE',
+//   ERROR: 'ERROR',
+// }
 export const MODULE_STATUS_TEXT_MAP = {
   [MODULE_STATUS.START_SERVICE]: ['*', '#ffd200', 'Ожидаю запуска теста'],
   [MODULE_STATUS.NEW]: ['*', '#ffd200', 'Ожидаю запуска теста'],
@@ -200,15 +202,15 @@ chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback)
         callback([null, error])
       })
   } else {
-    switch (type) {
-      case 'searchAnswers': {
-        searchAnswers(data).then((answersMap) => {
-          callback(answersMap)
-        }, function (error) {
-          callback([null, error])
-        })
-      } break;
-    }
+    // switch (type) {
+    //   case 'searchAnswers': {
+    //     searchAnswers(data).then((answersMap) => {
+    //       callback(answersMap)
+    //     }, function (error) {
+    //       callback([null, error])
+    //     })
+    //   } break;
+    // }
   }
   return true
 })

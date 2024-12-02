@@ -1,3 +1,9 @@
+import {
+  normalizeTextCompare,
+} from './normalize'
+import { fetchFromExtension, IOMError, log } from './utils'
+
+
 // ======================================================
 // PROGRAM
 // ======================================================
@@ -180,7 +186,7 @@ const SEARCH_MATCHES = [
     .replaceAll(/\s([^\s]*)$/gi, ''),
 ]
 
-async function searchAnswers(certName, linkToAnswers = undefined) {
+export async function searchAnswers(certName, linkToAnswers = undefined) {
   log('ТЕМА:\n', certName)
 
   let linkToAnswersFinal = linkToAnswers

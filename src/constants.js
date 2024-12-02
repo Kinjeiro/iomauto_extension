@@ -1,8 +1,8 @@
-const COMMANDS = {
+export const COMMANDS = {
   SEARCH_ANSWERS: 'search_answers'
 }
 
-const MODULE_STATUS = {
+export const MODULE_STATUS = {
   START_SERVICE: 'START_SERVICE',
   NEW: 'NEW',
   SEARCHING: 'SEARCH',
@@ -11,6 +11,21 @@ const MODULE_STATUS = {
   EXECUTING: 'EXECUTING',
   DONE: 'DONE',
   ERROR: 'ERROR',
+}
+
+
+export const DEFAULT_CONFIG = {
+  answerDelayMin: 6000,
+  answerDelayMax: 11000
+}
+export const currentConfig = DEFAULT_CONFIG
+
+export function updateConfig(part) {
+  Object.assign(currentConfig, part)
+  return currentConfig
+}
+export function getConfig(key = undefined) {
+  return key ? currentConfig[key] : currentConfig
 }
 
 

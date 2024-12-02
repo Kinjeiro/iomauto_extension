@@ -1,15 +1,12 @@
-// const MODULE_STATUS = {
-//   NEW: 'NEW',
-//   SEARCHING: 'SEARCH',
-//   READY: 'READY',
-//   EXECUTING: 'EXECUTION',
-//   DONE: 'DONE',
-//   ERROR: 'ERROR',
-// }
-// import { fetchFromExtension, log, logError, logErrorNotification, getRandomInt } from './utils'
-// import { searchAnswers } from './search-answers'
+import { IOMError, log } from './utils'
+import { getConfig, MODULE_STATUS, updateConfig } from '../constants'
+import { startExecute } from './execute-questions'
+import { searchAnswers } from './search-answers'
 
-console.log('Start from content-scripts')
+import './content-script.css'
+
+
+log('Start from content-scripts')
 
 // const normalizeTextCompare = globalThis.normalizeTextCompare
 
@@ -37,8 +34,6 @@ async function searchByCertName() {
   }
 }
 
-let answerDelayMin = 6000
-let answerDelayMax = 11000
 
 let intervalRunSearchQAForm
 async function runSearchQAForm() {
@@ -124,7 +119,7 @@ function errorWrapper(func) {
       clearInterval(intervalRunSearchAnswers)
       clearInterval(intervalRunSearchQAForm)
 
-      console.log('ОШИБКА ЗАПУСКА:\n', e)
+      log('ОШИБКА ЗАПУСКА:\n', e)
       chrome.storage.sync.set({
         moduleStatus: MODULE_STATUS.ERROR,
         error: e instanceof IOMError ? e.errorMsg : e.message,
@@ -160,12 +155,22 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
           '6-11',
         )
         const [min, max] = answerDelay.replaceAll(/ /g, '').split('-')
-        answerDelayMin = Math.max(parseInt(min, 10) * 1000, 2000)
-        answerDelayMax = max ? Math.max(parseInt(max, 10) * 1000, answerDelayMin) : answerDelayMin
+
+        const prevConfig = getConfig()
+        const {
+          answerDelayMin,
+          answerDelayMax,
+        } = updateConfig({
+          answerDelayMin: Math.max(parseInt(min, 10) * 1000, 2000),
+          answerDelayMax: max ? Math.max(parseInt(max, 10) * 1000, prevConfig.answerDelayMin) : prevConfig.answerDelayMin,
+        })
+
         log('Задержка между ответами от ', answerDelayMin, ' до ', answerDelayMax)
 
         log('Подстановка значений...')
-          startExecute(finalMapResult)
+
+        startExecute(finalMapResult)
+
         break
     }
   })()

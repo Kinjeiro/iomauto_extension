@@ -1,15 +1,15 @@
-function log(msg, ...args) {
+export function log(msg, ...args) {
   console.log(msg, ...args)
 }
-function logDebug(msg, ...args) {
+export function logDebug(msg, ...args) {
   console.log('DEBUG: ', msg, ...args)
 }
 
-function logError(msg, ...args) {
+export function logError(msg, ...args) {
   console.error(msg, ...args)
 }
 
-function logErrorNotification(error, ...args) {
+export function logErrorNotification(error, ...args) {
   chrome.storage.sync.set({
     moduleStatus: MODULE_STATUS.ERROR,
     error,
@@ -23,7 +23,7 @@ function logErrorNotification(error, ...args) {
  * @param url
  * @return {Promise<unknown>}
  */
-async function fetchFromExtension(url) {
+export async function fetchFromExtension(url) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
@@ -49,11 +49,11 @@ async function fetchFromExtension(url) {
   })
 }
 
-function getRandomInt(min, max) {
+export function getRandomInt(min, max) {
   return Math.round(Math.random() * (max - min) + min)
 }
 
-class IOMError extends Error {
+export class IOMError extends Error {
   errorMsg
   constructor(message, ...otherArgs) {
     super(message);
