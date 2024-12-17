@@ -4,7 +4,7 @@
 // https://regex101.com/r/iW2yE3/1 - (.)(?=[\s\S]*\n[^\n]*\1(.)(?:[^\n]{2})*\n?(?![\s\S]))
 // AАBВEЕKКMМHНOОPРCСTТXХaаeеoоpрcсyуxх
 // noinspection NonAsciiCharacters
-export const LATIN_TO_VIEW_CYRILLIC = {
+const LATIN_TO_VIEW_CYRILLIC = {
   // (//\s+\d+.{14}(.).*)
   // '$2': 'L', $1
   'A': 'А', //   913	U+0391	CE 91	Α	Greek Capital Letter Alpha
@@ -75,20 +75,27 @@ export const LATIN_TO_VIEW_CYRILLIC = {
   'ͯ': 'х', // 879	U+036F	CD AF	ͯ	Combining Latin Small Letter X
 }
 
-export function latinToViewCyrillic(input) {
+function latinToViewCyrillic(input) {
   return input.split('')
     .map(char => LATIN_TO_VIEW_CYRILLIC[char] || char)
     .join('')
 }
 // globalThis.latinToViewCyrillic = latinToViewCyrillic
 
-export function normalizeTextCompare(str, noTrim = false) {
+function normalizeTextCompare(str, noTrim = false) {
   const result = latinToViewCyrillic(str)
     .toLocaleLowerCase() // приводим к нижнему регистру
-    .replaceAll(/[=+!?'"«»,.()\[\]\-—_:\t​]/g, '') // убираем спец символы
+    // .replaceAll(/[=+!?'"«»,.()\[\]\-—_:\t​]/g, '') // убираем спец символы
+    .replace(/[=+!?'"«»,.()\[\]\-—_:\t​]/g, '') // убираем спец символы
 
   return noTrim
     ? result
-    : result.trim().replaceAll(/ /g, '') // убираем пробелы
+    : result.trim().replace(/ /g, '') // убираем пробелы
 }
 // globalThis.normalizeTextCompare = normalizeTextCompare
+
+// чтобы поддержать nodejs < 12 где не было еще es module
+module.exports = {
+  latinToViewCyrillic,
+  normalizeTextCompare,
+}

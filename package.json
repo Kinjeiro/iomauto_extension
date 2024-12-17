@@ -10,7 +10,10 @@
     "build": "webpack --mode=production --config config/webpack.config.js",
     "pack": "node pack.js",
     "repack": "npm run build && npm run pack",
-    "format": "prettier --write --ignore-unknown \"{config,public,src}/**/*.{html,css,js,ts,json}\""
+    "format": "prettier --write --ignore-unknown \"{config,public,src}/**/*.{html,css,js,ts,json}\"",
+    "parseDocs": "node ./localDB/parseDocxToJson.js",
+    "parsePdfs": "node ./localDB/parsePdfToJson.js",
+    "parseText": "node ./localDB/parseText.js"
   },
   "devDependencies": {
     "adm-zip": "^0.5.16",
@@ -18,9 +21,14 @@
     "css-loader": "^6.11.0",
     "file-loader": "^6.2.0",
     "mini-css-extract-plugin": "^2.9.2",
+    "node-easy-docx": "^0.1.3",
+    "pdf-parse": "^1.1.1",
     "prettier": "^2.8.8",
     "webpack": "^5.96.1",
     "webpack-cli": "^4.10.0",
     "webpack-merge": "^5.10.0"
+  },
+  "dependencies": {
+    "async-indexed-db": "^1.0.3"
   }
 }

@@ -7,7 +7,8 @@
 //   console.error(e);
 // }
 
-import { MODULE_STATUS } from '../constants'
+import { ACTIONS, MODULE_STATUS } from '../constants'
+import { dbSearchTopicsByName } from './localDb'
 
 
 const manifestData = chrome.runtime.getManifest();
@@ -177,41 +178,85 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
 //   })
 // })
 
+// function actionFetch(url, data, callback) {
+//   return fetch(url, data)
+//     .then(function (response) {
+//       return response.text()
+//         .then(function (text) {
+//           callback([
+//             {
+//               body: text,
+//               status: response.status,
+//               statusText: response.statusText,
+//             },
+//             null,
+//           ])
+//         })
+//     }, function (error) {
+//       callback([null, error])
+//     })
+// }
+
+
+
 chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback) {
   const {
-    url,
-    type,
-    data,
+    action,
+    payload,
   } = runtimeMessage
   console.log('runtime.onMessage: ', runtimeMessage)
 
-  if (url) {
-    fetch(url, data)
-      .then(function (response) {
-        return response.text()
-          .then(function (text) {
-            callback([
-              {
-                body: text,
-                status: response.status,
-                statusText: response.statusText,
-              }, null,
-            ])
+  try {
+    switch (action) {
+      case ACTIONS.FETCH: {
+        const {
+          url,
+          data,
+        } = payload
+
+        fetch(url, data)
+          .then(function (response) {
+            return response.text()
+              .then(function (text) {
+                callback([
+                  {
+                    body: text,
+                    status: response.status,
+                    statusText: response.statusText,
+                  },
+                  null,
+                ])
+              })
+          }, function (error) {
+            callback([null, error])
           })
-      }, function (error) {
-        callback([null, error])
-      })
-  } else {
-    // switch (type) {
-    //   case 'searchAnswers': {
-    //     searchAnswers(data).then((answersMap) => {
-    //       callback(answersMap)
-    //     }, function (error) {
-    //       callback([null, error])
-    //     })
-    //   } break;
-    // }
+        break
+      }
+
+      case ACTIONS.LOCAL_DB_SEARCH_TOPICS: {
+        const searchTerm = payload
+        dbSearchTopicsByName(searchTerm, (records, error) => {
+          callback({
+            records,
+            total: records.length,
+            success: !error,
+            error,
+          })
+        })
+        // dbGetAllTopics(callback)
+
+        // const result = await searchByName(prefix)
+        // console.log('ANKU , result', result)
+        // callback(result)
+        break
+      }
+    }
+  } catch (error) {
+    console.error(error)
   }
+
+
+
   return true
 })
 

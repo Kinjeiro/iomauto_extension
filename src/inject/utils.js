@@ -1,8 +1,13 @@
+import { ACTIONS, IS_DEBUG, MODULE_STATUS } from '../constants'
+
+
 export function log(msg, ...args) {
   console.log(msg, ...args)
 }
 export function logDebug(msg, ...args) {
-  console.log('DEBUG: ', msg, ...args)
+  if (IS_DEBUG) {
+    log('DEBUG: ', msg, ...args)
+  }
 }
 
 export function logError(msg, ...args) {
@@ -27,7 +32,10 @@ export async function fetchFromExtension(url) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
-        url,
+        action: ACTIONS.FETCH,
+        payload: {
+          url,
+        },
       },
       ([okData, error]) => {
         // response.text().then((responseText) => {
@@ -62,3 +70,10 @@ export class IOMError extends Error {
     this.otherArgs = otherArgs;
   }
 }
+
+export async function getHtmlDocument(url) {
+  const htmlPage = await fetchFromExtension(url)
+  const domParser = new DOMParser()
+  return domParser.parseFromString(htmlPage, 'text/html')
+}
+

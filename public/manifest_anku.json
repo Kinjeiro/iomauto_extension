@@ -1,0 +1,6 @@
+{
+    "action": {
+      "default_title": "Iomauto_extension",
+      "default_popup": "popup.html"
+    }
+}
