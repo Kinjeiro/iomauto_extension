@@ -29,7 +29,7 @@ export function modelSearchAdapter({
 
   // SITE
   domainUrl = undefined,
-  getUrlTopics = (certName) => '',
+  getUrlTopics = (content) => '',
 }) {
   return {
     id,

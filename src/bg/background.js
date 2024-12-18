@@ -214,7 +214,16 @@ chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback)
           data,
         } = payload
 
-        fetch(url, data)
+        fetch(
+          url,
+          {
+            method: 'GET',
+            body: data,
+            // https://stackoverflow.com/questions/39735496/redirect-after-a-fetch-post-call
+            redirect: 'follow' // 301 будет перенаправлен
+            // redirect: 'manual' // 301 будет перенаправлен
+          },
+        )
           .then(function (response) {
             return response.text()
               .then(function (text) {
@@ -228,6 +237,7 @@ chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback)
                 ])
               })
           }, function (error) {
+            console.error('FETCH ERROR\n', error)
             callback([null, error])
           })
         break

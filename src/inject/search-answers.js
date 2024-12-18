@@ -1,10 +1,11 @@
 import { modelTopicSearchItem } from './adapters/models'
 import { normalizeTextCompare } from './normalize'
-import { IOMError, log, logDebug } from './utils'
+import { IOMError, log, logDebug, logError } from './utils'
 
 import { ADAPTER_24_FORCARE_COM } from './adapters/adapter-24forscare'
 import { ADAPTER_INDEX_DB } from './adapters/adapter-local-indexdb'
 import { ADAPTER_RESHNMO_RU } from './adapters/adapter-reshnmo'
+import { ADAPTER_NMO_TEST_ONLINE } from './adapters/adapter-nmo-test-online'
 
 
 // ======================================================
@@ -16,12 +17,9 @@ import { ADAPTER_RESHNMO_RU } from './adapters/adapter-reshnmo'
 // const SEARCH_URL = 'https://24forcare.com/'
 
 
-function isSiteEngine(url) {
-  return typeof url === 'string' && url.indexOf('http') >= 0
-}
-
 const SEARCH_ADAPTERS = [
   ADAPTER_INDEX_DB,
+  ADAPTER_NMO_TEST_ONLINE,
   ADAPTER_RESHNMO_RU,
   ADAPTER_24_FORCARE_COM,
 ]
@@ -75,14 +73,14 @@ const SEARCH_MATCHES = [
 export async function searchAnswers(certName) {
   log('ТЕМА:\n', certName)
 
-  let resultFullUrlOrContent
-  if (!resultFullUrlOrContent) {
+  let resultTopicSearchItem
+  if (!resultTopicSearchItem) {
     // const htmlWithSearch = await (await fetch(DEFAULT_URL + 'search/?' + new URLSearchParams({
     //   query: certName,
     //   // credentials: "include"
     // }).toString())).text()
 
-    // { title: content }
+    // { title: topic }
     const topicsAllMap = {}
 
     // const anchorAll = []
@@ -109,7 +107,15 @@ export async function searchAnswers(certName) {
         // } = SEARCH_SITES[siteIndex]
 
         log(adapter.isLocal ? 'Локальная база' : `Сайт - ${adapter.domainUrl}`)
-        let topicSearchItems = await adapter.findTopicItems(certNameFinal)
+
+        let topicSearchItems
+        try {
+          topicSearchItems = await adapter.findTopicItems(certNameFinal)
+        } catch (e) {
+          logError(e)
+          topicSearchItems = []
+        }
+
         // if (isLocal) {
         //   log('Локальная база')
         //
@@ -133,11 +139,12 @@ export async function searchAnswers(certName) {
         if (topicSearchItems.length) {
           log('Найдены темы в базе данных:')
           topicSearchItems.forEach((item, index) => {
+            const topicSearchItem = modelTopicSearchItem(item)
             const {
               linkTitle,
               content,
               source,
-            } = modelTopicSearchItem(item)
+            } = topicSearchItem
             // const linkTitle = findLink.getAttribute('title')
 
             // anchorAll.push(findLink)
@@ -147,7 +154,8 @@ export async function searchAnswers(certName) {
             if (!hasAlreadyThisName) {
               // берем всегда первое полное совпадение, а то бывает 2 теста одинаково называются
               // к примеру "Профилактика онкологических заболеваний"
-              topicsAllMap[linkTitleFinal] = content
+              // topicsAllMap[linkTitleFinal] = content
+              topicsAllMap[linkTitleFinal] = topicSearchItem
               log((index + 1) + ') ' + linkTitle)
 
               const linkHash = normalizeTextCompare(linkTitle)
@@ -251,19 +259,13 @@ ${
 
     // index = position - 1
     log('Выбрали: ' + topicAllTitles[topicPosition - 1])
-    resultFullUrlOrContent = topicsAllMap[topicAllTitles[topicPosition - 1]]
-    log('ССЫЛКА на ОТВЕТЫ:\n', resultFullUrlOrContent)
+    resultTopicSearchItem = topicsAllMap[topicAllTitles[topicPosition - 1]]
+    log('ССЫЛКА на ОТВЕТЫ:\n', resultTopicSearchItem)
   }
 
   // const htmlWithAnswers = await (await fetchFromExtension(linkToAnswersFinal)).text()
-  const isSite = isSiteEngine(resultFullUrlOrContent)
-
-  const resultAdapter = SEARCH_ADAPTERS.find((adapter) => (
-    isSite
-      ? resultFullUrlOrContent.indexOf(adapter.domainUrl) === 0 // fullUrl
-      : adapter.isLocal
-    ))
-  return await resultAdapter.findAnswersMap(resultFullUrlOrContent)
+  const resultAdapter = SEARCH_ADAPTERS.find(({ id }) => resultTopicSearchItem.source === id)
+  return await resultAdapter.findAnswersMap(resultTopicSearchItem.content)
 
   // if (isSiteEngine(contentIdentificationFinal)) {
   //   const htmlWithAnswers = await fetchFromExtension(contentIdentificationFinal)

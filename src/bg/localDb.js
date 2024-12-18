@@ -12,9 +12,8 @@ function initDatabase() {
   const localBaseArray = require('./localBase.json')
   const records = localBaseArray.map(modelTopic)
 
-  // todo @ANKU @CRIT @MAIN @debugger -
-  console.log('ANKU , records', records.sort((a, b) => a.id > b.id))
-  debugger
+  // console.log('ANKU , records', records.sort((a, b) => a.id > b.id))
+  // debugger
 
   // const records = [
   //   modelTopic({ id: 1, name: 'title' }),
