@@ -19,18 +19,35 @@ function compareAnswer(inputDataStr, pageStr) {
   return normalizeTextCompare(pageStr) === normalizeTextCompare(inputDataStr)
 }
 
+function getMistakes(mapResult) {
+  const allKeys = Object.keys(mapResult)
+
+  const config = getConfig()
+
+  const mistakePositions = []
+  const mistakePercent = getRandomInt(
+    config.answerPercentMin,
+    config.answerPercentMax,
+  )
+  const mistakeCounts = Math.ceil(allKeys.length * mistakePercent)
+  while (mistakePositions.length < mistakeCounts) {
+    const answerPosition = getRandomInt(1, allKeys.length)
+    if (!mistakePositions.includes(answerPosition)) {
+      mistakePositions.push(answerPosition)
+    }
+  }
+
+  log(`БУДЕТ ДОПУЩЕНЫ СПЕЦИАЛЬНО ОШИБКИ [${mistakePositions.length}] в вопросах №:\n`, mistakePositions)
+
+  return mistakePositions
+}
+
 export function startExecute(mapResult) {
   // todo ограничение на 10000
   // const input =  window.prompt('JSON c ответами')
   // const mapResult = JSON.parse(input)
+  const mistakePositions = getMistakes(mapResult)
 
-  const allKeys = Object.keys(mapResult)
-  // 50% что будет ошибка в одном из вопросов
-  let randomOneMistakeNumber
-  if (getRandomInt(0, 1) === 1) {
-    randomOneMistakeNumber = getRandomInt(1, allKeys.length)
-    log('БУДЕТ ДОПУЩЕНА СПЕЦИАЛЬНО ОШИБКА в вопросе №' + (randomOneMistakeNumber))
-  }
 
   let pageQuestionNumber = 1
   let prevQuestion
@@ -88,7 +105,7 @@ export function startExecute(mapResult) {
          ["ответ 4"],
          ]
          */
-        if (pageQuestionNumber === randomOneMistakeNumber) {
+        if (mistakePositions.includes(pageQuestionNumber)) {
           if (typeof findAnswers === 'undefined' || findAnswers.length === 0 || findAnswers[0].length === 0) {
             // нету ответов - выбираем первый результат
             hasAnyAnswer = getSpan
@@ -96,13 +113,14 @@ export function startExecute(mapResult) {
             return true
           }
         }
+
         const result = findAnswers?.some((answersVariant, variantIndex) => {
           return answersVariant.some((answer) => {
             const isCorrect = compareAnswer(answer, answerFromPage)
             // logDebug('isCorrect', isCorrect, pageQuestionNumber, randomOneMistakeNumber)
             if (
               // если нужно сделать ошибку, то выбираем неправильный вариант для клика
-              pageQuestionNumber === randomOneMistakeNumber && !isCorrect
+              mistakePositions.includes(pageQuestionNumber) && !isCorrect
               || isCorrect
             ) {
               hasAnyAnswer = getSpan
@@ -240,13 +258,13 @@ ${Object.keys(pageAnswersMap).map((qu, index) => `${index + 1}) ${qu}`).join('\n
     try {
       const isEnd = checkAnswer()
       if (!isEnd) {
-        const {
-          answerDelayMin,
-          answerDelayMax,
-        } = getConfig()
+        const config = getConfig()
         // todo @ANKU @LOW - вынеси это в настройки
         // запускаем проверку еще раз пока не дойдем до последней кнопки
-        const randomAnswerDelay = getRandomInt(answerDelayMin, answerDelayMax)
+        const randomAnswerDelay = getRandomInt(
+          config.answerDelayMin,
+          config.answerDelayMax,
+        )
         log('Задержка ответа:', randomAnswerDelay)
         setTimeout(checkAnswerWrapper, randomAnswerDelay)
       } else {

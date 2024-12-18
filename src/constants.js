@@ -15,8 +15,10 @@ const MODULE_STATUS = {
 
 
 const DEFAULT_CONFIG = {
-  answerDelayMin: 6000,
-  answerDelayMax: 11000
+  answerDelayMin: 11000,
+  answerDelayMax: 40000,
+  answerPercentMin: 80,
+  answerPercentMax: 100,
 }
 const currentConfig = DEFAULT_CONFIG
 
@@ -24,8 +26,11 @@ function updateConfig(part) {
   Object.assign(currentConfig, part)
   return currentConfig
 }
-function getConfig(key = undefined) {
-  return key ? currentConfig[key] : currentConfig
+function getConfig() {
+  return currentConfig
+}
+function getConfigItem(key) {
+  return getConfig()[key]
 }
 
 // todo @ANKU @LOW - переместить в конфиг
@@ -96,6 +101,7 @@ module.exports = {
   currentConfig,
   updateConfig,
   getConfig,
+  getConfigItem,
   IS_DEBUG,
   modelQuestion,
   modelTopic,
