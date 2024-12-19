@@ -7,10 +7,13 @@ const DATABASE_ID = 'DreamDB'
 const STORE_TOPICS = 'Topics'
 
 
-function initDatabase() {
+async function initDatabase() {
   // todo @ANKU @CRIT @MAIN - подумать как лучше обновлять базу
-  const localBaseArray = require('./localBase.json')
-  const records = localBaseArray.map(modelTopic)
+  // const records = localBaseArray.map(modelTopic)
+  const records = [
+    ...require('./files/localBasePdfs.json'),
+    ...require('./files/localBaseDocs.json')
+  ]
 
   // console.log('ANKU , records', records.sort((a, b) => a.id > b.id))
   // debugger
@@ -20,7 +23,7 @@ function initDatabase() {
   //   { id: 2, name: 'tit de' },
   // ]
   // insertRecords(records, true)
-  insertRecords(records)
+  await insertRecords(records)
 }
 
 // todo @ANKU @LOW - обернуть для удобства
@@ -42,31 +45,30 @@ function promiseForRequest(request) {
   });
 }
 
-// const request = indexedDB.open(DATABASE_ID, 1)
-const request = indexedDB.open(DATABASE_ID, 1)
-
 const DB_INDEXES = {
   // 'id': 'id',
   // 'title': 'title'
 }
 
-request.onupgradeneeded = function(event) {
-  db = event.target.result
-  const objectStore = db.createObjectStore(STORE_TOPICS, { keyPath: 'id' })
-  // objectStore.createIndex(DB_INDEXES.id, DB_INDEXES.id, { unique: true }); // Индекс для поиска по имени
-  // objectStore.createIndex(DB_INDEXES.title, DB_INDEXES.title, { unique: true }); // Индекс для поиска по имени
-  // objectStore.createIndex('updateDate', 'updateDate', { unique: false })
-}
-request.onsuccess = function(event) {
-  console.log("БАЗА ПОДКЛЮЧЕНА")
-  db = event.target.result
+async function start() {
+  // удаляем старую
+  await promiseForRequest(indexedDB.deleteDatabase(DATABASE_ID))
 
-  // todo @ANKU @CRIT @MAIN @debugger -
-  initDatabase()
+  const request = indexedDB.open(DATABASE_ID, 1)
+  request.onupgradeneeded = function(event) {
+    db = event.target.result
+    const objectStore = db.createObjectStore(STORE_TOPICS, { keyPath: 'id' })
+    // objectStore.createIndex(DB_INDEXES.id, DB_INDEXES.id, { unique: true }); // Индекс для поиска по имени
+    // objectStore.createIndex(DB_INDEXES.title, DB_INDEXES.title, { unique: true }); // Индекс для поиска по имени
+    // objectStore.createIndex('updateDate', 'updateDate', { unique: false })
+  }
+  db = await promiseForRequest(request)
+
+  console.log("БАЗА ПОДКЛЮЧЕНА")
+
+  await initDatabase()
 }
-request.onerror = function(event) {
-  console.error("Ошибка открытия базы данных:", event.target.errorCode)
-}
+
 
 
 function getStore({
@@ -85,24 +87,27 @@ function getStore({
 }
 
 
-function insertRecords(records, silent) {
+async function insertRecords(records, silent) {
   const store = getStore({
     mode: 'readwrite',
     onComplete: () => console.log("All records added successfully"),
     onError: (error) => console.log("Transaction error:", error),
   })
 
-  records.forEach(record => {
-    const request = store.put(record)
-    request.onsuccess = function() {
-      console.log("Record added or updated:", record)
-    }
-    request.onerror = function() {
-      if (!silent) {
-        console.error("Error adding record:", record)
+  for (const record of records) {
+  // records.forEach(record => {
+    try {
+      if (record.questions.length > 0) {
+        await promiseForRequest(store.put(record))
+        console.log("+ ", record.questions.length, record.title)
       }
+    } catch (e) {
+      if (!silent) {
+        console.error("Error adding record:", record, '\n',e)
+      }
+      debugger
     }
-  })
+  }
 }
 
 
@@ -234,3 +239,6 @@ async function set(db, storeName, key, value) {
   console.debug('The result is', result)
   return result
 }
+
+
+start()

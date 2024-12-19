@@ -3,13 +3,20 @@ const path = require('path')
 const { modelQuestion } = require('../src/constants')
 
 
-function logError(message) {
-  console.error(message)
+function log(...message) {
+  console.log(...message)
+}
+function logErrorSilent(...message) {
+  console.error(...message)
+}
+function logError(...message) {
+  logErrorSilent(...message)
   debugger
-  throw new Error(message)
+  // throw new Error(message[0])
 }
 
-function parseFromSingleLineData(questionsBlock) {
+
+function parseFromSingleLineData(questionsBlock, ignoreAnswerNumber = false) {
   // questionsBlock = questionsBlock.replace(/\r?\n/g, ' ')
 
   // Регулярное выражение для поиска тем вопросов
@@ -71,10 +78,10 @@ function parseFromSingleLineData(questionsBlock) {
     }
 
     if (correctAnswers.length === 0) {
-      logError('Ошибка: не найдены правильные ответы', question)
+      logError('Ошибка: не найдены правильные ответы\n', questionNumber, question)
     }
-    if (prevQuestionNumber && (prevQuestionNumber + 1 !== questionNumber)) {
-      logError('Ошибка: неправильная последовательность вопросов', question)
+    if (!ignoreAnswerNumber && prevQuestionNumber && (prevQuestionNumber + 1 !== questionNumber)) {
+      logError('Ошибка: неправильная последовательность вопросов\n', questionNumber, question)
     }
 
     prevQuestionNumber = questionNumber
@@ -123,6 +130,8 @@ function testParseText() {
 }
 
 module.exports = {
+  log,
   logError,
+  logErrorSilent,
   parseFromSingleLineData,
 }

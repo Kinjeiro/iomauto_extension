@@ -25,7 +25,8 @@
 
   "permissions": [
     "storage",
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "unlimitedStorage"
   ],
 
   "action": {

@@ -30,12 +30,15 @@ export const ADAPTER_NMO_TEST_ONLINE = modelSearchAdapter({
     console.log('Ссылка:\n', url)
     const topicPageDocument = await getHtmlDocument(url)
 
-    // const errorHeader = searchPageDocument.querySelector('.wp-block-heading')
-    // if (errorHeader && errorHeader.text === 'Упс! Страница не найдена') {
-    //   return []
-    // }
+    const errorHeader = topicPageDocument.querySelector('.wp-block-heading')
+    if (errorHeader && errorHeader.innerText.trim().indexOf('Упс! Страница не найдена') === 0) {
+      return []
+    }
 
-    const title = topicPageDocument.querySelector('.wp-block-post-title').innerText
+    const title = topicPageDocument
+      .querySelector('.wp-block-post-title')
+      .innerText
+      .trim()
 
     // там всегда один ответ
     return [

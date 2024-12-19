@@ -21,3 +21,5 @@ package-lock.json
 
 # packed files
 /release
+
+/localDB/files.js
