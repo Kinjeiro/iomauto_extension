@@ -40,7 +40,7 @@ async function getCurrentTab() {
 export const MODULE_STATUS_TEXT_MAP = {
   [MODULE_STATUS.START_SERVICE]: ['*', '#ffd200', 'Ожидаю запуска теста'],
   [MODULE_STATUS.NEW]: ['*', '#ffd200', 'Ожидаю запуска теста'],
-  [MODULE_STATUS.SEARCHING]: ['...', '#ffd200', 'Поиск ответов в интернете... (5 - 30 сек)'],
+  [MODULE_STATUS.SEARCHING]: ['...', '#ffd200', 'Поиск ответов в интернете... (10 - 60 сек)'],
   [MODULE_STATUS.WAIT_QA_FORM]: ['...', '#ffd200', 'Ожидаю формы вопросов (нажмите "Начать тест")'],
   [MODULE_STATUS.READY]: ['>', '#00ff07', 'Ответы найдены - нажмите для запуска!'],
   [MODULE_STATUS.EXECUTING]: ['>...', '#ffd200', 'Подстановка ответов... (подождите)'],
@@ -220,8 +220,10 @@ chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback)
             method: 'GET',
             body: data,
             // https://stackoverflow.com/questions/39735496/redirect-after-a-fetch-post-call
-            redirect: 'follow' // 301 будет перенаправлен
+            redirect: 'follow', // 301 будет перенаправлен
             // redirect: 'manual' // 301 будет перенаправлен
+            // 24forcare ооочень большая задержка
+            signal: AbortSignal.timeout(70000), // timeout
           },
         )
           .then(function (response) {
@@ -235,6 +237,10 @@ chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback)
                   },
                   null,
                 ])
+              })
+              .catch((error) => {
+                console.error('PARSE HTML ERROR\n', error)
+                callback([null, error])
               })
           }, function (error) {
             console.error('FETCH ERROR\n', error)
