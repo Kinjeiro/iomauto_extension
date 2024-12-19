@@ -150,25 +150,42 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
         break
 
       case MODULE_STATUS.EXECUTING:
-        const answerDelay = prompt(
-          'Выберите диапазон случайно задержи между ответами, в секундах (минимально 2 секунды)\n(Нажмите Enter чтобы оставить РЕКОМЕНДОВАННЫЕ 6-11 секунд)',
-          '6-11',
+        const config = getConfig()
+
+        // ЗАДЕРЖКА
+        let answerDelay = prompt(
+          'Выберите диапазон случайно задержи между ответами, в секундах (минимально 2 секунды)\n(Нажмите Enter чтобы оставить РЕКОМЕНДОВАННЫЕ значения)',
+          `${config.answerDelayMin/1000}-${config.answerDelayMax/1000}`,
         )
         const [min, max] = answerDelay.replaceAll(/ /g, '').split('-')
 
-        const prevConfig = getConfig()
         const {
           answerDelayMin,
           answerDelayMax,
         } = updateConfig({
           answerDelayMin: Math.max(parseInt(min, 10) * 1000, 2000),
-          answerDelayMax: max ? Math.max(parseInt(max, 10) * 1000, prevConfig.answerDelayMin) : prevConfig.answerDelayMin,
+          answerDelayMax: max
+            ? Math.max(parseInt(max, 10) * 1000, config.answerDelayMin)
+            : config.answerDelayMin,
         })
-
         log('Задержка между ответами от ', answerDelayMin, ' до ', answerDelayMax)
 
-        log('Подстановка значений...')
 
+        // ОШИБКИ
+        answerDelay = prompt(
+          'Выберите точность ответов (в процентах) \n(для прохождения теста на 3 нужно минимум 85%',
+          `${config.answerPercentMin}-${config.answerPercentMax}`,
+        )
+        const [answerPercentMin, answerPercentMax] = answerDelay.replaceAll(/ /g, '').split('-')
+        updateConfig({
+          answerPercentMin: parseInt(answerPercentMin),
+          answerPercentMax: parseInt(answerPercentMax || answerPercentMin),
+        })
+
+
+
+
+        log('Подстановка значений...')
         startExecute(finalMapResult)
 
         break

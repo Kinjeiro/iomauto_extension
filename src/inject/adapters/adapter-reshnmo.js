@@ -18,14 +18,14 @@ export const ADAPTER_RESHNMO_RU = modelSearchAdapter({
   id: ADAPTER_RESHNMO_RU_ID,
   domainUrl: 'https://reshnmo.ru/',
   getUrlTopics(certNameFinal) {
-    return '?' + new URLSearchParams({
+    return this.domainUrl + '?' + new URLSearchParams({
       s: certNameFinal,
       // credentials: "include"
     }).toString()
   },
   /* linkTitle, fullUrl, source, localItemId []*/
   async findTopicItems(certName) {
-    const searchPageDocument = await getHtmlDocument(this.domainUrl + this.getUrlTopics(certName))
+    const searchPageDocument = await getHtmlDocument(this.getUrlTopics(certName))
 
     return Array.from(searchPageDocument.querySelectorAll('.post-card--standard .post-card__title a'))
       .map((findLink) => modelTopicSearchItem({

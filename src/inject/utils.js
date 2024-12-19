@@ -72,6 +72,7 @@ export class IOMError extends Error {
 }
 
 export async function getHtmlDocument(url) {
+  console.log('Ссылка:\n', url)
   const htmlPage = await fetchFromExtension(url)
   const domParser = new DOMParser()
   return domParser.parseFromString(htmlPage, 'text/html')

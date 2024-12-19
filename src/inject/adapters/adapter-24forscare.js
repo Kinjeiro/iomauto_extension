@@ -75,14 +75,14 @@ export const ADAPTER_24_FORCARE_COM = modelSearchAdapter({
   id: ADAPTER_24_FORCARE_COM_ID,
   domainUrl: 'https://24forcare.com/',
   getUrlTopics(certName) {
-    return 'search/?' + new URLSearchParams({
+    return this.domainUrl + 'search/?' + new URLSearchParams({
       query: certName,
       // credentials: "include"
     }).toString()
   },
   /* linkTitle, fullUrl, source, localItemId []*/
   async findTopicItems(certName) {
-    const searchPageDocument = await getHtmlDocument(this.domainUrl + this.getUrlTopics(certName))
+    const searchPageDocument = await getHtmlDocument(this.getUrlTopics(certName))
 
     return Array.from(searchPageDocument.querySelectorAll('.item-name'))
       .map((findLink) => modelTopicSearchItem({

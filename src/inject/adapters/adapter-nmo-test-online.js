@@ -20,14 +20,12 @@ export const ADAPTER_NMO_TEST_ONLINE = modelSearchAdapter({
   domainUrl: 'https://nmo-test.online/',
   getUrlTopics(certName) {
     // https://nmo-test.online/search/%D0%A0%D0%B0%D1%81%D1%81%D0%B5%D1%8F%D0%BD%D0%BD%D1%8B%D0%B9%20%D1%81%D0%BA%D0%BB%D0%B5%D1%80%D0%BE%D0%B7
-    return `search/${certName}`
+    return `${this.domainUrl}search/${certName}`
   },
   /* linkTitle, fullUrl, source, localItemId []*/
   async findTopicItems(certName) {
     // todo @ANKU @LOW - переделать на getUrlTopics
-
     const url = this.domainUrl + transliterate(certName) + '/'
-    console.log('Ссылка:\n', url)
     const topicPageDocument = await getHtmlDocument(url)
 
     const errorHeader = topicPageDocument.querySelector('.wp-block-heading')

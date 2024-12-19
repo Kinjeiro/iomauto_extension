@@ -29,8 +29,6 @@ export const ADAPTER_INDEX_DB = modelSearchAdapter({
       //   return response
       // }
     )
-    console.log('ANKU , test', records)
-    debugger
     return records.map((record) => {
       const theme = modelTopic(record)
       return modelTopicSearchItem({

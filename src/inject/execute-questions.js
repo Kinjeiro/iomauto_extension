@@ -24,12 +24,13 @@ function getMistakes(mapResult) {
 
   const config = getConfig()
 
-  const mistakePositions = []
-  const mistakePercent = getRandomInt(
-    config.answerPercentMin,
-    config.answerPercentMax,
+  let mistakePositions = []
+  const answerPercent = getRandomInt(
+    Math.min(config.answerPercentMin, 100),
+    Math.min(config.answerPercentMax, 100),
   )
-  const mistakeCounts = Math.ceil(allKeys.length * mistakePercent)
+  const mistakeCounts = Math.ceil(allKeys.length * (100 - answerPercent) / 100)
+
   while (mistakePositions.length < mistakeCounts) {
     const answerPosition = getRandomInt(1, allKeys.length)
     if (!mistakePositions.includes(answerPosition)) {
@@ -37,17 +38,20 @@ function getMistakes(mapResult) {
     }
   }
 
-  log(`БУДЕТ ДОПУЩЕНЫ СПЕЦИАЛЬНО ОШИБКИ [${mistakePositions.length}] в вопросах №:\n`, mistakePositions)
+  mistakePositions = mistakePositions.sort()
+
+  log(`БУДЕТ ДОПУЩЕНЫ СПЕЦИАЛЬНО ОШИБКИ [${mistakePositions.length}](${answerPercent}% точности) в вопросах №:\n`, mistakePositions)
 
   return mistakePositions
 }
 
 export function startExecute(mapResult) {
+  const allKeys = Object.keys(mapResult)
+
   // todo ограничение на 10000
   // const input =  window.prompt('JSON c ответами')
   // const mapResult = JSON.parse(input)
   const mistakePositions = getMistakes(mapResult)
-
 
   let pageQuestionNumber = 1
   let prevQuestion

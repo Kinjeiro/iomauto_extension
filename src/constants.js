@@ -17,7 +17,7 @@ const MODULE_STATUS = {
 const DEFAULT_CONFIG = {
   answerDelayMin: 11000,
   answerDelayMax: 40000,
-  answerPercentMin: 80,
+  answerPercentMin: 85,
   answerPercentMax: 100,
 }
 const currentConfig = DEFAULT_CONFIG
