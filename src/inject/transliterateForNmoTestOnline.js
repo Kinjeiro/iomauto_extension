@@ -1,4 +1,4 @@
-export function transliterate(word){
+export function transliterateForNmoTestOnline(word){
   let answer = ""
   const a = {};
 
@@ -17,8 +17,10 @@ export function transliterate(word){
 	a["Ш"]="SH"
 	a["Щ"]="SCH"
 	a["З"]="Z"
-	a["Х"]="H"
-	a["Ъ"]="'"
+	// a["Х"]="H"
+	a["Х"]="X"
+	// a["Ъ"]="'"
+	a["Ъ"]=""
 
   a["ё"]="yo"
 	// a["й"]="i"
@@ -33,8 +35,10 @@ export function transliterate(word){
 	a["ш"]="sh"
 	a["щ"]="sch"
 	a["з"]="z"
-	a["х"]="h"
-	a["ъ"]="'"
+	// a["х"]="h"
+	a["х"]="x"
+	// a["ъ"]="'"
+	a["ъ"]=""
 
   a["Ф"]="F"
 	// a["Ы"]="I"
@@ -66,7 +70,8 @@ export function transliterate(word){
 	a["М"]="M"
 	a["И"]="I"
 	a["Т"]="T"
-	a["Ь"]="'"
+	// a["Ь"]="'"
+	a["Ь"]=""
 	a["Б"]="B"
 	a["Ю"]="YU"
   a["я"]="ya"
@@ -75,7 +80,8 @@ export function transliterate(word){
 	a["м"]="m"
 	a["и"]="i"
 	a["т"]="t"
-	a["ь"]="'"
+	// a["ь"]="'"
+	a["ь"]=""
 	a["б"]="b"
 	a["ю"]="yu"
 

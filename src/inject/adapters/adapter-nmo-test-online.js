@@ -1,4 +1,4 @@
-import { transliterate } from '../transliterate'
+import { transliterateForNmoTestOnline } from '../transliterateForNmoTestOnline'
 import { getHtmlDocument } from '../utils'
 
 import { modelSearchAdapter, modelTopicSearchItem } from './models'
@@ -25,7 +25,7 @@ export const ADAPTER_NMO_TEST_ONLINE = modelSearchAdapter({
   /* linkTitle, fullUrl, source, localItemId []*/
   async findTopicItems(certName) {
     // todo @ANKU @LOW - переделать на getUrlTopics
-    const url = this.domainUrl + transliterate(certName) + '/'
+    const url = this.domainUrl + transliterateForNmoTestOnline(certName) + '/'
     const topicPageDocument = await getHtmlDocument(url)
 
     const errorHeader = topicPageDocument.querySelector('.wp-block-heading')
