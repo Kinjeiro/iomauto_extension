@@ -223,7 +223,7 @@ chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback)
             redirect: 'follow', // 301 будет перенаправлен
             // redirect: 'manual' // 301 будет перенаправлен
             // 24forcare ооочень большая задержка
-            signal: AbortSignal.timeout(70000), // timeout
+            signal: AbortSignal.timeout(100000), // timeout 100 с
           },
         )
           .then(function (response) {
