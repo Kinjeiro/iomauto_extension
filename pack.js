@@ -9,7 +9,8 @@ try {
   );
 
   const outdir = 'release';
-  const filename = `${base}-v${version}.zip`;
+  // const filename = `${base}-v${version}.zip`;
+  const filename = `${base}.zip`;
   const zip = new AdmZip();
   zip.addLocalFolder('build');
   if (!existsSync(outdir)) {
