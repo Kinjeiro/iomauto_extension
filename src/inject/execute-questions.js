@@ -21,6 +21,12 @@ function compareAnswer(inputDataStr, pageStr) {
 
 function getMistakes(mapResult) {
   const allKeys = Object.keys(mapResult)
+  const questionAmount = parseInt(
+    document.querySelector(
+      '.quiz-info-col-indicators-item:nth-child(1) .text_value'
+    )?.innerHTML || 0,
+    10
+  ) || allKeys.length
 
   const config = getConfig()
 
@@ -29,18 +35,18 @@ function getMistakes(mapResult) {
     Math.min(config.answerPercentMin, 100),
     Math.min(config.answerPercentMax, 100),
   )
-  const mistakeCounts = Math.ceil(allKeys.length * (100 - answerPercent) / 100)
+  const mistakeCounts = Math.ceil(questionAmount * (100 - answerPercent) / 100)
 
   while (mistakePositions.length < mistakeCounts) {
-    const answerPosition = getRandomInt(1, allKeys.length)
+    const answerPosition = getRandomInt(1, questionAmount)
     if (!mistakePositions.includes(answerPosition)) {
       mistakePositions.push(answerPosition)
     }
   }
 
-  mistakePositions = mistakePositions.sort()
+  mistakePositions = mistakePositions.sort((a, b) => a - b)
 
-  log(`БУДЕТ ДОПУЩЕНЫ СПЕЦИАЛЬНО ОШИБКИ [${mistakePositions.length}](${answerPercent}% точности) в вопросах №:\n`, mistakePositions)
+  log(`Из ${questionAmount} БУДЕТ ДОПУЩЕНЫ СПЕЦИАЛЬНО ОШИБКИ [${mistakePositions.length}](${answerPercent}% точности) в вопросах №:\n`, mistakePositions)
 
   return mistakePositions
 }
