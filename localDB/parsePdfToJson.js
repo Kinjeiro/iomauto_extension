@@ -3,8 +3,9 @@ const path = require('path')
 const pdf = require('pdf-parse')
 
 const {
-  normalizeTextCompare,
-  latinToViewCyrillic
+  latinToViewCyrillic,
+  normalizeTopicId,
+  normalizeTopicTitle,
 } = require('../src/inject/normalize')
 const { modelTopic } = require('../src/constants')
 
@@ -14,11 +15,12 @@ const {
 } = require('./parseText')
 
 
+const PARSER_PDF_OLD_ID = 'pdfOld'
 
 // Путь к вашему PDF файлу
 const pdfDirPath = path.join(__dirname, '../../ответы - pdf')
 // const pdfPath = path.join(__dirname, '../../НМО ОТВЕТЫ/003 Отв Аденоматозный полипозный синдром.pdf')
-const localDBPath = path.join(__dirname, '../src/bg/localBase.json')
+const localDBPath = path.join(__dirname, '../src/bg/files/localBasePdfs.json')
 
 function parseFromPdf(pdfText) {
   const text = pdfText
@@ -50,12 +52,11 @@ function parseFromPdf(pdfText) {
     debugger
   }
 
-  const themeName = latinToViewCyrillic(
+  const topicTitle = normalizeTopicTitle(
     questionMatch[1]
       .replace(/\|\|/g, ' ')
-      .replace(/[«»]/g, '')
-      .trim()
   )
+
   // const questionsBlock = latinToViewCyrillic('1. ' + questionMatch[3] + questionMatch[4])
   const questionsBlock = latinToViewCyrillic(
     questionMatch[3]
@@ -63,13 +64,13 @@ function parseFromPdf(pdfText) {
       .trim()
   ).trim()
 
-  console.log('Тема: ', themeName)
+  console.log('Тема: ', topicTitle)
   const questionsAndAnswers = parseFromSingleLineData(questionsBlock)
 
   const now = new Date()
-  const themeItem = modelTopic({
-    id: normalizeTextCompare(themeName, true),
-    title: themeName,
+  const topic = modelTopic({
+    id: normalizeTopicId(topicTitle),
+    title: topicTitle,
     createDate: now,
     updateDate: now,
     /*number,
@@ -77,9 +78,10 @@ function parseFromPdf(pdfText) {
     answers,
     correctAnswers,*/
     questions: questionsAndAnswers,
+    from: PARSER_PDF_OLD_ID,
   })
 
-  return themeItem
+  return topic
 }
 
 async function runParseAllPdfs() {
@@ -101,7 +103,7 @@ async function runParseAllPdfs() {
 
   const result = []
   // сделаем обработку последовательно
-  for (const file of files) {
+  for await (let file of files) {
     let dataBuffer = fs.readFileSync(path.join(pdfDirPath, file))
     const data = await pdf(dataBuffer)
     console.log('\n\nФайл: ', file)
@@ -110,6 +112,7 @@ async function runParseAllPdfs() {
     result.push(themeItem)
   }
 
+  debugger
   fs.writeFileSync(localDBPath, JSON.stringify(result, null, 2), 'utf-8')
 }
 

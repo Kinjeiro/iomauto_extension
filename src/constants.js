@@ -29,9 +29,6 @@ function updateConfig(part) {
 function getConfig() {
   return currentConfig
 }
-function getConfigItem(key) {
-  return getConfig()[key]
-}
 
 // todo @ANKU @LOW - переместить в конфиг
 // const IS_DEBUG = false
@@ -77,12 +74,14 @@ function modelQuestion({
     correctAnswers,
   }
 }
+
 function modelTopic({
   id,
   title,
   createDate,
   updateDate,
   questions,
+  from,
 }) {
   return {
     id,
@@ -90,6 +89,7 @@ function modelTopic({
     createDate,
     updateDate,
     questions,
+    from,
   }
 }
 
@@ -101,7 +101,6 @@ module.exports = {
   currentConfig,
   updateConfig,
   getConfig,
-  getConfigItem,
   IS_DEBUG,
   modelQuestion,
   modelTopic,

@@ -1,11 +1,11 @@
 import { modelTopic } from '../constants'
+import { normalizeTextCompare, normalizeTopicTitle } from '../inject/normalize'
 
 
 let db
 
 const DATABASE_ID = 'DreamDB'
 const STORE_TOPICS = 'Topics'
-
 
 async function initDatabase() {
   // todo @ANKU @CRIT @MAIN - подумать как лучше обновлять базу
@@ -24,6 +24,12 @@ async function initDatabase() {
   // ]
   // insertRecords(records, true)
   await insertRecords(records)
+
+  // todo @ANKU @CRIT @MAIN @debugger -
+  // const allTopics = await promiseForRequest(getStore().getAll())
+  // console.log('ВСЕ ТЕМЫ')
+  // // console.log(allTopics.map((topic) => `${topic.id} [${topic.questions.length}] \t\t\t ${topic.title}`).join('\n'))
+  // console.log(allTopics.map((topic) => `${topic.title} [${topic.questions.length}]`).join('\n'))
 }
 
 // todo @ANKU @LOW - обернуть для удобства
@@ -47,7 +53,7 @@ function promiseForRequest(request) {
 
 const DB_INDEXES = {
   // 'id': 'id',
-  // 'title': 'title'
+  'title': 'title'
 }
 
 async function start() {
@@ -58,7 +64,7 @@ async function start() {
   request.onupgradeneeded = function(event) {
     db = event.target.result
     const objectStore = db.createObjectStore(STORE_TOPICS, { keyPath: 'id' })
-    // objectStore.createIndex(DB_INDEXES.id, DB_INDEXES.id, { unique: true }); // Индекс для поиска по имени
+    objectStore.createIndex(DB_INDEXES.title, DB_INDEXES.title, { unique: true }); // Индекс для поиска по имени
     // objectStore.createIndex(DB_INDEXES.title, DB_INDEXES.title, { unique: true }); // Индекс для поиска по имени
     // objectStore.createIndex('updateDate', 'updateDate', { unique: false })
   }
@@ -94,7 +100,7 @@ async function insertRecords(records, silent) {
     onError: (error) => console.log("Transaction error:", error),
   })
 
-  for (const record of records) {
+  for await (let record of records) {
   // records.forEach(record => {
     try {
       if (record.questions.length > 0) {
@@ -144,12 +150,20 @@ export function dbSearchTopicsByName(prefix, callback) {
 
 
 
-  // const storeIndex = getStore().index(DB_INDEXES.title)
-  const storeIndex = getStore()
+  const storeTitleIndex = getStore().index(DB_INDEXES.title)
+  // const storeIndex = getStore()
 
   // Определяем диапазон ключей: от prefix до prefix + '\uffff'
-  const keyRange = IDBKeyRange.bound(prefix, prefix + '\uffff', false, true)
-  const request = storeIndex.openCursor(keyRange)
+
+  // так как мы ищем по id нужно нормализовать
+  // const keyRange = IDBKeyRange.bound(prefix, prefix + '\uffff', false, true)
+  const keyRange = IDBKeyRange.bound(
+    normalizeTopicTitle(prefix),
+    prefix + '\uffff',
+    false,
+    true,
+  )
+  const request = storeTitleIndex.openCursor(keyRange)
 
 
   const result = []

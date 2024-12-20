@@ -85,17 +85,47 @@ function latinToViewCyrillic(input) {
 function normalizeTextCompare(str, noTrim = false) {
   const result = latinToViewCyrillic(str)
     .toLocaleLowerCase() // приводим к нижнему регистру
-    // .replaceAll(/[=+!?'"«»,.()\[\]\-—_:\t​]/g, '') // убираем спец символы
-    .replace(/[=+!?'"«»,.()\[\]\-—_:\t​]/g, '') // убираем спец символы
+    .replace(/\s[\-\–]\s/g, ' ')
+    // todo @ANKU @LOW - исправить файлы с "~" в названии
+    // \– и \- разные символы
+    .replace(/[~—_\t​]/g, ' ')
+    .replace(/[=+!?'"«»,.()\[\]:]/g, '') // убираем спец символы
+    .replace(/  /g, ' ') // убираем двойные пустоты
+    .replace(/(\S)- /g, '$1-') // убираем лишний пробел
 
   return noTrim
     ? result
-    : result.trim().replace(/ /g, '') // убираем пробелы
+    : result.trim()
+      .replace(/[\-\–]/g, '') // убираем тире
+      .replace(/ /g, '') // убираем пробелы
 }
 // globalThis.normalizeTextCompare = normalizeTextCompare
 
 // чтобы поддержать nodejs < 12 где не было еще es module
+
+function normalizeTopicId(title) {
+  return normalizeTextCompare(title)
+}
+function normalizeTopicTitle(title) {
+  // return latinToViewCyrillic(title)
+  //   .trim()
+  //   .replace(/[«»]/g, '')
+  //   .replace(/^\d+\.?\s*/, '') // убираем номер темы
+  //   .replace(/\s*\(\d+\)$/, '') // убираем сзади (1)
+  //   .replace(/(.)\s*?-\s*?(\d+)$/, '$1 - $2') // делаем пробел между годом
+  return normalizeTextCompare(
+    title
+      .trim()
+      // .replace(/[«»]/g, '')
+      .replace(/^\d+\.?\s*/, '') // убираем номер темы
+      .replace(/\s*\(\d+\)$/, ''), // убираем сзади (1)
+    true, // cохраняем пробелы
+  )
+    .replace(/[\s\-]*?(\d{4})$/, ' $1') // делаем пробел между годом
+}
 module.exports = {
   latinToViewCyrillic,
   normalizeTextCompare,
+  normalizeTopicId,
+  normalizeTopicTitle,
 }

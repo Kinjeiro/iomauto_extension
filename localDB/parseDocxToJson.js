@@ -11,11 +11,13 @@ const path = require('path')
 
 const {
   normalizeTextCompare,
-  latinToViewCyrillic
+  latinToViewCyrillic,
+  normalizeTopicId,
+  normalizeTopicTitle,
 } = require('../src/inject/normalize')
 const {
   modelTopic,
-  modelQuestion
+  modelQuestion,
 } = require('../src/constants')
 const {
   log,
@@ -31,6 +33,8 @@ const {
 } = require('./files')
 
 console.log('ANKU , DIR_PATHS', DIR_PATHS)
+
+const PARSER_GOOGLE_DOCX_ID = 'googleDocs'
 
 const SUPPORT_EXT = [
   '.doc',
@@ -53,7 +57,8 @@ let absoluteFiles = DIR_PATHS.reduce((result, dir) => {
 }, [])
   .filter(Boolean)
 
-// absoluteFiles = ['D:\\__CODE_IOMAUTO__\\ответы от Константина\\диск\\добавил\\Опухоли_средостения_по_утвержденным_клиническим_рекомендациям_2024.docx']
+// todo @ANKU @CRIT @MAIN @debugger -
+// absoluteFiles = ['d:\\__CODE_IOMAUTO__\\ответы от Константина\\диск\\2024г английские а и о\\Аллергический ринит (по утвержденным клиническим рекомендациям).docx']
 console.log('ANKU , absoluteFiles', absoluteFiles)
 
 
@@ -68,17 +73,12 @@ function normalizeAnswer(answer) {
 }
 
 function parseFromDocx(fileName, docStrings) {
-  const topicName = latinToViewCyrillic(
-    fileName
-      .replace(/^\d+\.?\s*/, '')
-      .replace(/\s*\(\d+\)$/, '') // убираем сзади (1)
-      .trim()
-  )
-  console.log('Тема: ', topicName)
+  const topicTitle = normalizeTopicTitle(fileName)
+  console.log('Тема: ', topicTitle)
 
   const docStringsFinal = (
     // на первом вопросе бывает съедается первая цифра
-    '1. ' + docStrings.replace(/^\d?\.?\s?/, '')
+    '1. ' + docStrings.replace(/^\s*\d?\.?\s?/, '')
   )
     .replace(/\r\n/g, '\n') // убираем txt переходы
     .replace(/\n\n/g, '\n') // убираем пустые строки
@@ -97,8 +97,8 @@ function parseFromDocx(fileName, docStrings) {
 
   const now = new Date()
   const topic = modelTopic({
-    id: normalizeTextCompare(topicName, true),
-    title: topicName,
+    id: normalizeTopicId(topicTitle),
+    title: topicTitle,
     createDate: now,
     updateDate: now,
     /*number,
@@ -106,127 +106,128 @@ function parseFromDocx(fileName, docStrings) {
     answers,
     correctAnswers,*/
     questions: questionsAndAnswers,
+    from: PARSER_GOOGLE_DOCX_ID,
   })
 
   return topic
 }
 
-function parseFromDocxOld(fileName, docsJson) {
-  const topicName = latinToViewCyrillic(
-    fileName
-      .replace(/\d+\.\s+/g, '')
-      .trim()
-  )
-  console.log('Тема: ', topicName)
+// function parseFromDocxOld(fileName, docsJson) {
+//   const topicName = latinToViewCyrillic(
+//     fileName
+//       .replace(/\d+\.\s+/g, '')
+//       .trim()
+//   )
+//   console.log('Тема: ', topicName)
+//
+//
+//   const questionsAndAnswers = []
+//
+//   let prevQuestionNumber
+//   for(let i = 0; i < docsJson.length; i = i + 2) {
+//     const questionStr = docsJson[i].text
+//     if (!questionStr) {
+//       return
+//     }
+//
+//     let match = /(\d+)\.\s(.*)/.exec(questionStr)
+//
+//     if (!match) {
+//       if (i === 0) {
+//         // на первом вопросе бывает съедается первая цифра
+//         match = /(\d+)\.\s(.*)/.exec(`1. ${questionStr.replace(/^.\s/, '')}`)
+//
+//         if (!match) {
+//           console.log('ANKU , questionStr', questionStr)
+//           debugger
+//         }
+//       }
+//       console.log('ANKU , questionStr', questionStr)
+//       // бывает еще и реклама - пропускаем ее
+//       return
+//     }
+//
+//     const questionNumber = parseInt(match[1], 10)
+//     const question = latinToViewCyrillic(match[2])
+//     const answers = docsJson[i+1].items
+//
+//     const correctAnswers = []
+//     let prevFullLine = ''
+//     // на 1 больше итерация чтобы prevFullLine последнюю задействовать
+//     for (let indexAnswers = 0; indexAnswers < answers.length + 1; indexAnswers++) {
+//       const answer = answers[indexAnswers]
+//       if (answer) {
+//         // format bold и может быть и color не связанный с ответом
+//         const { format, text } = answer
+//
+//         if (!/^\d+\)/.test(text) ) {
+//           // бывает строки парсятся и разрываются строка - соединяем с предыдущей
+//           prevFullLine += text
+//           return
+//         }
+//       }
+//
+//       if (/\+$/.test(prevFullLine)) {
+//         correctAnswers.push(normalizeAnswer(prevFullLine))
+//       }
+//
+//       prevFullLine = answer && answer.text
+//     }
+//
+//     if (correctAnswers.length === 0) {
+//       logError('Ошибка: не найдены правильные ответы', question)
+//     }
+//     if (prevQuestionNumber && (prevQuestionNumber + 1 !== questionNumber)) {
+//       logError('Ошибка: неправильная последовательность вопросов', question)
+//     }
+//
+//     questionsAndAnswers.push(modelQuestion({
+//       number: questionNumber,
+//       question,
+//       correctAnswers,
+//     }))
+//
+//     prevQuestionNumber = questionNumber
+//   }
+//
+//   if (questionsAndAnswers.length < 20) {
+//     logError('Ошибка парсинга кол-ва вопросов')
+//   }
+//
+//   const now = new Date()
+//   const topic = modelTopic({
+//     id: normalizeTextCompare(topicName, true),
+//     title: topicName,
+//     createDate: now,
+//     updateDate: now,
+//     /*number,
+//     question,
+//     answers,
+//     correctAnswers,*/
+//     questions: questionsAndAnswers,
+//   })
+//
+//   return topic
+// }
 
-
-  const questionsAndAnswers = []
-
-  let prevQuestionNumber
-  for(let i = 0; i < docsJson.length; i = i + 2) {
-    const questionStr = docsJson[i].text
-    if (!questionStr) {
-      return
-    }
-
-    let match = /(\d+)\.\s(.*)/.exec(questionStr)
-
-    if (!match) {
-      if (i === 0) {
-        // на первом вопросе бывает съедается первая цифра
-        match = /(\d+)\.\s(.*)/.exec(`1. ${questionStr.replace(/^.\s/, '')}`)
-
-        if (!match) {
-          console.log('ANKU , questionStr', questionStr)
-          debugger
-        }
-      }
-      console.log('ANKU , questionStr', questionStr)
-      // бывает еще и реклама - пропускаем ее
-      return
-    }
-
-    const questionNumber = parseInt(match[1], 10)
-    const question = latinToViewCyrillic(match[2])
-    const answers = docsJson[i+1].items
-
-    const correctAnswers = []
-    let prevFullLine = ''
-    // на 1 больше итерация чтобы prevFullLine последнюю задействовать
-    for (let indexAnswers = 0; indexAnswers < answers.length + 1; indexAnswers++) {
-      const answer = answers[indexAnswers]
-      if (answer) {
-        // format bold и может быть и color не связанный с ответом
-        const { format, text } = answer
-
-        if (!/^\d+\)/.test(text) ) {
-          // бывает строки парсятся и разрываются строка - соединяем с предыдущей
-          prevFullLine += text
-          return
-        }
-      }
-
-      if (/\+$/.test(prevFullLine)) {
-        correctAnswers.push(normalizeAnswer(prevFullLine))
-      }
-
-      prevFullLine = answer && answer.text
-    }
-
-    if (correctAnswers.length === 0) {
-      logError('Ошибка: не найдены правильные ответы', question)
-    }
-    if (prevQuestionNumber && (prevQuestionNumber + 1 !== questionNumber)) {
-      logError('Ошибка: неправильная последовательность вопросов', question)
-    }
-
-    questionsAndAnswers.push(modelQuestion({
-      number: questionNumber,
-      question,
-      correctAnswers,
-    }))
-
-    prevQuestionNumber = questionNumber
-  }
-
-  if (questionsAndAnswers.length < 20) {
-    logError('Ошибка парсинга кол-ва вопросов')
-  }
-
-  const now = new Date()
-  const topic = modelTopic({
-    id: normalizeTextCompare(topicName, true),
-    title: topicName,
-    createDate: now,
-    updateDate: now,
-    /*number,
-    question,
-    answers,
-    correctAnswers,*/
-    questions: questionsAndAnswers,
-  })
-
-  return topic
-}
-
-function extract(filePath) {
-  return new Promise((resolve, reject) => {
-    textract.fromFileWithPath(
-      filePath,
-      {
-        // https://www.npmjs.com/package/textract#configuration
-        preserveLineBreaks: true,
-      },
-      function( error, text ) {
-        if (error) {
-          reject(error)
-        } else {
-          resolve(text)
-        }
-      },
-    )
-  })
-}
+// function extract(filePath) {
+//   return new Promise((resolve, reject) => {
+//     textract.fromFileWithPath(
+//       filePath,
+//       {
+//         // https://www.npmjs.com/package/textract#configuration
+//         preserveLineBreaks: true,
+//       },
+//       function( error, text ) {
+//         if (error) {
+//           reject(error)
+//         } else {
+//           resolve(text)
+//         }
+//       },
+//     )
+//   })
+// }
 
 async function runParseAllDocxs() {
   // Чтение PDF файла
@@ -246,10 +247,17 @@ async function runParseAllDocxs() {
   // }))
 
   const result = []
+  const resultIncorrectName = []
+
   // сделаем обработку последовательно
-  for (const filePath of absoluteFiles) {
-    const extension = path.extname(filePath);
-    const fileName = path.basename(filePath,extension);
+  for await (let filePath of absoluteFiles) {
+    const extension = path.extname(filePath)
+    const fileName = path.basename(filePath, extension)
+
+    if (fileName.indexOf('~') >= 0) {
+      resultIncorrectName.push(filePath)
+      debugger
+    }
 
     // const filePath = path.join(docxDirPath, '169 Менингококковая инфекция у детей (по утвержденным клиническим рекомендациям).odt')
     // const filePath = path.join(docxDirPath, '162 Макулярная дегенерация возрастная (по утвержденным клиническим рекомендациям).odt')
@@ -353,6 +361,8 @@ async function runParseAllDocxs() {
 
   debugger
   fs.writeFileSync(LOCAL_DB_PATH_DOCS, JSON.stringify(result, null, 2), 'utf-8')
+
+  fs.writeFileSync(path.join(__dirname, './incorrectNames.txt'), resultIncorrectName.join('\n'))
 }
 
 runParseAllDocxs()
