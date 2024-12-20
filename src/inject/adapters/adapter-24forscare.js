@@ -1,4 +1,4 @@
-import { ACTIONS, modelQuestion, modelTopic } from '../../constants'
+import { normalizeTopicId } from '../normalize'
 import { getHtmlDocument, log } from '../utils'
 import { modelSearchAdapter, modelTopicSearchItem } from './models'
 
@@ -81,10 +81,10 @@ export const ADAPTER_24_FORCARE_COM = modelSearchAdapter({
     }).toString()
   },
   /* linkTitle, fullUrl, source, localItemId []*/
-  async findTopicItems(certName) {
+  async findTopicItems(certName, searchFullTopicId) {
     const searchPageDocument = await getHtmlDocument(this.getUrlTopics(certName))
 
-    return Array.from(searchPageDocument.querySelectorAll('.item-name'))
+    const searchItems = Array.from(searchPageDocument.querySelectorAll('.item-name'))
       .map((findLink) => modelTopicSearchItem({
         source: ADAPTER_24_FORCARE_COM_ID,
         linkTitle: findLink.text
@@ -93,8 +93,34 @@ export const ADAPTER_24_FORCARE_COM = modelSearchAdapter({
           .replaceAll(/[«»]/g, ''),
         content: 'https://24forcare.com/' + findLink.getAttribute('href'),
       }))
+
+    const result = []
+    for await (const searchItem of searchItems) {
+      const topicId = normalizeTopicId(searchItem.linkTitle)
+      if (topicId === searchFullTopicId) {
+        // нужно проверить результаты, так как есть страница, а ответов на нее нет
+        const answersMap = await this.findAnswersMap(searchItem.content)
+        if (Object.keys(answersMap).length < 10) {
+          log('На сайте ' + this.domainUrl + ' в этой теме УЖЕ НЕТ ответов', answersMap)
+        } else {
+          result.push({
+            ...searchItem,
+            content: answersMap,
+          })
+        }
+      } else {
+        result.push(searchItem)
+      }
+    }
+
+    return result
   },
   async findAnswersMap(fullUrl) {
+    if (typeof fullUrl !== 'string') {
+      // это answersMap, которую мы загрузили ранее
+      return fullUrl
+    }
+
     const answersPageDocument = await getHtmlDocument(fullUrl)
 
     return answersParsing24forcare(

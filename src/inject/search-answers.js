@@ -1,5 +1,5 @@
 import { modelTopicSearchItem } from './adapters/models'
-import { normalizeTextCompare } from './normalize'
+import { normalizeTextCompare, normalizeTopicId } from './normalize'
 import { IOMError, log, logDebug, logError } from './utils'
 
 import { ADAPTER_24_FORCARE_COM } from './adapters/adapter-24forscare'
@@ -72,6 +72,7 @@ const SEARCH_MATCHES = [
 
 export async function searchAnswers(certName) {
   log('ТЕМА:\n', certName)
+  const fullTitleHash = normalizeTopicId(certName)
 
   let resultTopicSearchItem
   if (!resultTopicSearchItem) {
@@ -110,7 +111,7 @@ export async function searchAnswers(certName) {
 
         let topicSearchItems
         try {
-          topicSearchItems = await adapter.findTopicItems(certNameFinal)
+          topicSearchItems = await adapter.findTopicItems(certNameFinal, fullTitleHash)
         } catch (e) {
           logError(e)
           topicSearchItems = []
@@ -138,6 +139,7 @@ export async function searchAnswers(certName) {
 
         if (topicSearchItems.length) {
           log('Найдены темы в базе данных:')
+
           topicSearchItems.forEach((item, index) => {
             const topicSearchItem = modelTopicSearchItem(item)
             const {
@@ -158,9 +160,8 @@ export async function searchAnswers(certName) {
               topicsAllMap[linkTitleFinal] = topicSearchItem
               log((index + 1) + ') ' + linkTitle)
 
-              const linkHash = normalizeTextCompare(linkTitle)
-              const shortTitleHash = normalizeTextCompare(certNameFinal)
-              const fullTitleHash = normalizeTextCompare(certName)
+              const linkHash = normalizeTopicId(linkTitle)
+              const shortTitleHash = normalizeTopicId(certNameFinal)
               // так как мы обрезаем поиск то тут нужно более точно уже искать совпадение
               // log('Сравниваем\n',normalizeTextCompare(linkTitle), '\n', normalizeTextCompare(certNameFinal))
               if (linkHash.indexOf(shortTitleHash) >= 0) {
@@ -260,12 +261,15 @@ ${
     // index = position - 1
     log('Выбрали: ' + topicAllTitles[topicPosition - 1])
     resultTopicSearchItem = topicsAllMap[topicAllTitles[topicPosition - 1]]
-    log('ССЫЛКА на ОТВЕТЫ:\n', resultTopicSearchItem)
+    // log('ССЫЛКА на ОТВЕТЫ:\n', resultTopicSearchItem)
   }
 
   // const htmlWithAnswers = await (await fetchFromExtension(linkToAnswersFinal)).text()
   const resultAdapter = SEARCH_ADAPTERS.find(({ id }) => resultTopicSearchItem.source === id)
-  return await resultAdapter.findAnswersMap(resultTopicSearchItem.content)
+  const answersMap = await resultAdapter.findAnswersMap(resultTopicSearchItem.content)
+
+  log('ОТВЕТЫ\n', answersMap)
+  return answersMap
 
   // if (isSiteEngine(contentIdentificationFinal)) {
   //   const htmlWithAnswers = await fetchFromExtension(contentIdentificationFinal)

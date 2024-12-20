@@ -16,7 +16,7 @@ export function modelSearchAdapter({
   /**
    * <modelTopicSearchItem>[] (linkTitle, fullUrl, source [])
    */
-  findTopicItems = (searchTerm) => Promise.resolve([]),
+  findTopicItems = (searchTerm, searchFullTopicId) => Promise.resolve([]),
   /**
    * {
    *   <questionName>: <answers>[]
