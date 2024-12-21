@@ -29,7 +29,7 @@ export const ADAPTER_INDEX_DB = modelSearchAdapter({
       //   return response
       // }
     )
-    return records.reduce((result, record) => {
+    const questionsMap = records.reduce((result, record) => {
       const topic = modelTopic(record)
 
       result.push(modelTopicSearchItem({
@@ -50,6 +50,8 @@ export const ADAPTER_INDEX_DB = modelSearchAdapter({
 
       return result
     }, [])
+
+    return questionsMap
   },
   async findAnswersMap(content) {
     // в content мы выше запихнули уже массив theme.questions

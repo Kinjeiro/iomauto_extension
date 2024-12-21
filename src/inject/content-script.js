@@ -62,6 +62,11 @@ async function runSearchAnswers() {
     // finalMapResult = await searchAnswers(certName)
     finalMapResult = await searchAnswers2(certName)
 
+    if (Object.keys(finalMapResult).length < 10) {
+      alert('НЕ НАЙДЕНЫ ответы для темы\n Спросите в группе\nhttps://t.me/iomauto\nможет кто-то уже решал.')
+      throw Error('Не найдены ответы для темы')
+    }
+
     chrome.storage.sync.set({
       moduleStatus: MODULE_STATUS.WAIT_QA_FORM,
     })

@@ -102,7 +102,10 @@ export async function searchAnswers2(certName) {
       // .replace('по утвержденным клиническим рекомендациям', ''),
     true
   )
-  const topicPartId = normalizeTopicId(certNameNormalized)
+  const topicPartId = normalizeTopicId(
+    certNameNormalized
+      .replace('по утвержденным клиническим рекомендациям', '')
+  )
 
   const results = await Promise.all(SEARCH_ADAPTERS.map(async (adapter) => {
     const adapterLogPrefix = `[${adapter.id}] `
