@@ -30,6 +30,7 @@ export const ADAPTER_RESHNMO_RU = modelSearchAdapter({
     return Array.from(searchPageDocument.querySelectorAll('.post-card--standard .post-card__title a'))
       .map((findLink) => modelTopicSearchItem({
         source: ADAPTER_RESHNMO_RU_ID,
+        // todo @ANKU @LOW - normalizeTopicTitle
         linkTitle: findLink.text
           .replaceAll('Тест с ответами по теме', '')
           .replaceAll(' | Тесты НМО с ответами', '')

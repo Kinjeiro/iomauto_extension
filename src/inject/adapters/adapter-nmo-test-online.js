@@ -1,3 +1,4 @@
+import { normalizeAnswer, normalizeQuestion } from '../normalize'
 import { transliterateForNmoTestOnline } from '../transliterateForNmoTestOnline'
 import { getHtmlDocument } from '../utils'
 
@@ -33,7 +34,7 @@ export const ADAPTER_NMO_TEST_ONLINE = modelSearchAdapter({
       return []
     }
 
-    const title = topicPageDocument
+    const topicTitle = topicPageDocument
       .querySelector('.wp-block-post-title')
       .innerText
       .trim()
@@ -42,7 +43,7 @@ export const ADAPTER_NMO_TEST_ONLINE = modelSearchAdapter({
     return [
       modelTopicSearchItem({
         source: ADAPTER_NMO_TEST_ONLINE_ID,
-        linkTitle: title,
+        linkTitle: topicTitle,
         content: topicPageDocument,
       })
     ]
@@ -53,8 +54,7 @@ export const ADAPTER_NMO_TEST_ONLINE = modelSearchAdapter({
 
     for (let i = 0; i < items.length; i = i + 2) {
       // последний заголовок может быть не нашли ответы - свяжитесь с нами
-      const title = items[i].innerText
-        .replace(/^\d+.\s/g, '')
+      const question = normalizeQuestion(items[i].innerText)
 
       const answersNode = items[i+1]
 
@@ -62,13 +62,9 @@ export const ADAPTER_NMO_TEST_ONLINE = modelSearchAdapter({
         const correctAnswers = [
           ...answersNode.querySelectorAll('strong'),
           ...answersNode.querySelectorAll('b')
-        ].map((node) => (
-          node.innerText
-            .replace(/^\d+\)\s/g, '')
-            .trim()
-        ))
+        ].map((node) => normalizeAnswer(node.innerText))
         // массив массивов нужен
-        answersMap[title] = [correctAnswers]
+        answersMap[question] = correctAnswers
       }
     }
 

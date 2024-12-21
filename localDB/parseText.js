@@ -1,6 +1,10 @@
 const fs = require('fs')
 const path = require('path')
 const { modelQuestion } = require('../src/constants')
+const {
+  normalizeQuestion,
+  normalizeAnswer
+} = require('../src/inject/normalize')
 
 
 function log(...message) {
@@ -40,10 +44,7 @@ function parseFromSingleLineData(questionsBlock, ignoreAnswerNumber = false) {
   // Поиск вопросов и их вариантов ответов
   while ((questionMatch = questionRegex.exec(questionsBlock)) !== null) {
     const questionNumber = parseInt(questionMatch[1].trim(), 10)
-    const question = questionMatch[2]
-      .replace(/\n/g, ' ')
-      .trim()
-      .replace(/[«»]/g, '')
+    const question = normalizeQuestion(questionMatch[2])
     const answersBlock = questionMatch[4].trim() + '\n0) ' // для поиска
 
     // Получаем следующий текст после вопроса для извлечения вариантов ответов
@@ -55,7 +56,7 @@ function parseFromSingleLineData(questionsBlock, ignoreAnswerNumber = false) {
 
     // Ищем варианты ответов в следующем сегменте
     while ((answerMatch = answerRegex.exec(answersBlock)) !== null) {
-      const answer = answerMatch[1]
+      const answerString = answerMatch[1]
         .replace(/\n/g, ' ')
         .trim()
 
@@ -66,14 +67,8 @@ function parseFromSingleLineData(questionsBlock, ignoreAnswerNumber = false) {
       // // answers.push(answerNormalize)
 
       // 1) +1; 2) 0; 3) -2; 4) +2.+
-      if (answer[answer.length - 1] === '+') {
-        correctAnswers.push(
-          answer
-            .substring(0, answer.length - 1)
-            .trim()
-            // заменяем последние символы
-            .replace(/[;.]$/g, '')
-        )
+      if (answerString[answerString.length - 1] === '+') {
+        correctAnswers.push(normalizeAnswer(answerString))
       }
     }
 

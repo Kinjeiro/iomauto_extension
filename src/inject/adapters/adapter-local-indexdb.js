@@ -29,14 +29,27 @@ export const ADAPTER_INDEX_DB = modelSearchAdapter({
       //   return response
       // }
     )
-    return records.map((record) => {
-      const theme = modelTopic(record)
-      return modelTopicSearchItem({
+    return records.reduce((result, record) => {
+      const topic = modelTopic(record)
+
+      result.push(modelTopicSearchItem({
         source: ADAPTER_INDEX_DB_ID,
-        linkTitle: theme.title,
-        content: theme.questions,
-      })
-    })
+        linkTitle: topic.title,
+        content: topic.questions,
+      }))
+      //
+      // if (!/\d{4}$/.test(topic.title)) {
+      //   // если не оканчивается на год - добавим 2020 для точности
+      //   // так как раньше темы назывались без года
+      //   result.push(modelTopicSearchItem({
+      //     source: ADAPTER_INDEX_DB_ID,
+      //     linkTitle: topic.title + ' 2020',
+      //     content: topic.questions,
+      //   }))
+      // }
+
+      return result
+    }, [])
   },
   async findAnswersMap(content) {
     // в content мы выше запихнули уже массив theme.questions
@@ -44,7 +57,7 @@ export const ADAPTER_INDEX_DB = modelSearchAdapter({
       const question = modelQuestion(questionItem)
       // бывает одинаковые вопросы и разные ответы, поэтому сделали массив массивов
       // resultMap[question.question] = question.correctAnswers
-      resultMap[question.question] = [question.correctAnswers]
+      resultMap[question.question] = question.correctAnswers
       return resultMap
     }, {})
   }

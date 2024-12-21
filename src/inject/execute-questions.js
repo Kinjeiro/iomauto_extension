@@ -3,7 +3,7 @@ import { normalizeTextCompare } from './normalize'
 import { getRandomInt, IOMError, log, logError, logErrorNotification } from './utils'
 
 
-function compareAnswer(inputDataStr, pageStr) {
+function compareText(inputDataStr, pageStr) {
   // могут быть не заглавные, могут быть запятые лишние в конце
   // поэтому обрежем в конце
   // return inputDataStr.match(pageStr.substr(0, pageStr.length - 1))
@@ -78,11 +78,11 @@ export function startExecute(mapResult) {
     }
 
     let findAnswers
-    const foundKey = allKeys.find((key) => compareAnswer(key, question))
+    const foundKey = allKeys.find((key) => compareText(key, question))
     if (foundKey) {
       findAnswers = mapResult[foundKey]
       // console.log('Найдены ответы: ', findAnswers)
-      log(findAnswers[0], findAnswers[1])
+      log(findAnswers)
     } else {
       logError('Не найден вопрос в ответах: ' + question, '\n', mapResult)
     }
@@ -124,21 +124,19 @@ export function startExecute(mapResult) {
           }
         }
 
-        const result = findAnswers?.some((answersVariant, variantIndex) => {
-          return answersVariant.some((answer) => {
-            const isCorrect = compareAnswer(answer, answerFromPage)
-            // logDebug('isCorrect', isCorrect, pageQuestionNumber, randomOneMistakeNumber)
-            if (
-              // если нужно сделать ошибку, то выбираем неправильный вариант для клика
-              mistakePositions.includes(pageQuestionNumber) && !isCorrect
-              || isCorrect
-            ) {
-              hasAnyAnswer = getSpan
-              // todo @ANKU @CRIT @MAIN - не всегда проставляет - при переключении фокуса
-              getSpan().click()
-              return true
-            }
-          })
+        const result = findAnswers?.some((answer, variantIndex) => {
+          const isCorrect = compareText(answer, answerFromPage)
+          // logDebug('isCorrect', isCorrect, pageQuestionNumber, randomOneMistakeNumber)
+          if (
+            // если нужно сделать ошибку, то выбираем неправильный вариант для клика
+            mistakePositions.includes(pageQuestionNumber) && !isCorrect
+            || isCorrect
+          ) {
+            hasAnyAnswer = getSpan
+            // todo @ANKU @CRIT @MAIN - не всегда проставляет - при переключении фокуса
+            getSpan().click()
+            return true
+          }
           // if (hasAnyAnswer) {
           //   // если нашли ответы прекращаем вариантов блоков ответов перебирать
           //   return true

@@ -82,7 +82,7 @@ function latinToViewCyrillic(input) {
 }
 // globalThis.latinToViewCyrillic = latinToViewCyrillic
 
-function normalizeTextCompare(str, noTrim = false) {
+function normalizeTextCompare(str, withWhitespaces = false) {
   const result = latinToViewCyrillic(str)
     .toLocaleLowerCase() // приводим к нижнему регистру
     .replace(/\s[\-\–]\s/g, ' ')
@@ -92,10 +92,11 @@ function normalizeTextCompare(str, noTrim = false) {
     .replace(/[=+!?'"«»,.()\[\]:]/g, '') // убираем спец символы
     .replace(/  /g, ' ') // убираем двойные пустоты
     .replace(/(\S)- /g, '$1-') // убираем лишний пробел
+    .trim()
 
-  return noTrim
+  return withWhitespaces
     ? result
-    : result.trim()
+    : result
       .replace(/[\-\–]/g, '') // убираем тире
       .replace(/ /g, '') // убираем пробелы
 }
@@ -123,9 +124,34 @@ function normalizeTopicTitle(title) {
   )
     .replace(/[\s\-]*?(\d{4})$/, ' $1') // делаем пробел между годом
 }
+
+function normalizeQuestion(question) {
+  return question
+    .replace(/\n/g, ' ')
+    .trim()
+    .replace(/[«»]/g, '')
+    .replaceAll(/^\d+\.\s*/g, '')
+    .trim()
+}
+
+function normalizeAnswer(answer) {
+  return answer
+    .replace(/\n/g, ' ')
+    .trim()
+    // убрать 1) и + в конце и кавычки в начале и в конце
+    .replaceAll(/^"/g, '')
+    .replaceAll(/^\d+\) /g, '')
+    .replaceAll(/[.;+"]+$/g, '')
+    .trim()
+}
+
+
 module.exports = {
   latinToViewCyrillic,
   normalizeTextCompare,
+
   normalizeTopicId,
   normalizeTopicTitle,
+  normalizeQuestion,
+  normalizeAnswer,
 }

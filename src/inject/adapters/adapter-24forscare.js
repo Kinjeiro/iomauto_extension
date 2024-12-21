@@ -1,4 +1,4 @@
-import { normalizeTopicId } from '../normalize'
+import { normalizeAnswer, normalizeQuestion, normalizeTopicId } from '../normalize'
 import { getHtmlDocument, log } from '../utils'
 import { modelSearchAdapter, modelTopicSearchItem } from './models'
 
@@ -20,20 +20,14 @@ export function answersParsing24forcare(rowEls = []) {
     rowEls
       .forEach((item, index) => {
         if (item.nodeName === 'H3') {
-          // todo убрать номер вопроса
-          question = item.textContent.replaceAll(/^\d+\. /g, '')
+          question = normalizeQuestion(item.textContent)
         } else if (question && item.nodeName === 'P' && item.childNodes.length > 0) {
           const answers = []
 
           item.querySelectorAll('strong')
             .forEach((aItem) => {
               if (aItem) {
-                answers.push(aItem.textContent
-                  // убрать 1) и + в конце и кавычки в начале и в конце
-                  .replaceAll(/^"/g, '')
-                  .replaceAll(/^\d+\) /g, '')
-                  .replaceAll(/[\.\;\+"]+$/g, ''),
-                )
+                answers.push(normalizeAnswer(aItem.textContent))
               }
             })
           // // HACK выбираем первый ответ
@@ -49,9 +43,9 @@ export function answersParsing24forcare(rowEls = []) {
           // одинаковые вопросы есть с разными вариантами
           // mapResult[question] = answers
 
-          if (!mapResult[question]) {
-            mapResult[question] = []
-          }
+          // if (!mapResult[question]) {
+          //   mapResult[question] = []
+          // }
           /*
             В ответах сразу два одинаковых вопроса, просто варианты выбора разные.
             Сделай multiple решение:
@@ -60,13 +54,10 @@ export function answersParsing24forcare(rowEls = []) {
                ["ответ 4"],
             ]
           */
-          mapResult[question].push(answers)
+          mapResult[question] = answers
         }
       })
   }
-
-  console.log(mapResult)
-  // console.log(JSON.stringify(mapResult))
 
   return mapResult
 }

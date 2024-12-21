@@ -1,7 +1,7 @@
 import { IOMError, log } from './utils'
 import { getConfig, MODULE_STATUS, updateConfig } from '../constants'
 import { startExecute } from './execute-questions'
-import { searchAnswers } from './search-answers'
+import { searchAnswers2 } from './search-answers'
 
 import './content-script.css'
 
@@ -56,7 +56,11 @@ async function runSearchAnswers() {
   if (certName) {
     clearInterval(intervalRunSearchAnswers)
 
-    finalMapResult = await searchAnswers(certName)
+    /*
+      @NOTE: Новая версия, которая суммирует все ответы
+    */
+    // finalMapResult = await searchAnswers(certName)
+    finalMapResult = await searchAnswers2(certName)
 
     chrome.storage.sync.set({
       moduleStatus: MODULE_STATUS.WAIT_QA_FORM,
