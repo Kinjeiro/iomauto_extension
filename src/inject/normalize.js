@@ -34,6 +34,7 @@ const LATIN_TO_VIEW_CYRILLIC = {
   'Ϲ': 'С', //   1017	U+03F9	CF B9	Ϲ	Greek Capital Lunate Sigma Symbol
   'Ϻ': 'М', //   1018	U+03FA	CF BA	Ϻ	Greek Capital Letter San
   'Ё': 'Е', //   1025	U+0401	D0 81	Ё	Cyrillic Capital Letter Io
+  'ё': 'е',
   //
   'Ҋ': 'Й', //   1162	U+048A	D2 8A	Ҋ	Cyrillic Capital Letter Short I With Tail
   'ҋ': 'й', //   1163	U+048B	D2 8B	ҋ	Cyrillic Small Letter Short I With Tail
