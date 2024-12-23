@@ -21,6 +21,7 @@ function compareText(inputDataStr, pageStr) {
 
 function getMistakes(mapResult) {
   const allKeys = Object.keys(mapResult)
+  // todo @ANKU @LOW - проблема что если уже была ошибка не нахождения ответа, то нужно убирать ошибки
   const questionAmount = parseInt(
     document.querySelector(
       '.quiz-info-col-indicators-item:nth-child(1) .text_value'
@@ -57,7 +58,7 @@ export function startExecute(mapResult) {
   // todo ограничение на 10000
   // const input =  window.prompt('JSON c ответами')
   // const mapResult = JSON.parse(input)
-  const mistakePositions = getMistakes(mapResult)
+  let mistakePositions = getMistakes(mapResult)
 
   let pageQuestionNumber = 1
   let prevQuestion
@@ -84,6 +85,8 @@ export function startExecute(mapResult) {
       // console.log('Найдены ответы: ', findAnswers)
       log(findAnswers)
     } else {
+      // обнуляем ошибки, если вариант не найден
+      mistakePositions = []
       logError('Не найден вопрос в ответах: ' + question, '\n', mapResult)
     }
 
