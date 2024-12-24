@@ -7,13 +7,15 @@
 //   console.error(e);
 // }
 
-import { ACTIONS, MODULE_STATUS } from '../constants'
+import { ACTIONS, ACTIONS_CLIENT, MODULE_STATUS } from '../constants'
 import { dbSearchTopicsByName } from './localDb'
 
 
 const manifestData = chrome.runtime.getManifest();
 const VERSION = manifestData.version
 
+let currentTopic = undefined
+let currentModuleStatus = undefined
 
 async function getCurrentTab() {
   let queryOptions = {
@@ -46,6 +48,8 @@ export const MODULE_STATUS_TEXT_MAP = {
   [MODULE_STATUS.EXECUTING]: ['>...', '#ffd200', 'Подстановка ответов... (подождите)'],
   [MODULE_STATUS.DONE]: ['DONE', '#165af3', 'Все подставлено!'],
   [MODULE_STATUS.ERROR]: ['ER', '#ec0303', 'ОШИБКА'],
+
+  [MODULE_STATUS.COPY_ANSWERS]: ['COPY', '#03ec16', 'Скопируйте ответы'],
 }
 
 console.log('Start background script')
@@ -120,29 +124,40 @@ async function updateBadge(moduleStatusValue, error) {
 // BADGE CLICKED
 // ======================================================
 chrome.action.onClicked.addListener((tab) => {
-  chrome.storage.sync.get(({
-    moduleStatus,
-    error,
-  }) => {
-    console.log('bg: action: ', moduleStatus, error)
-    switch (moduleStatus) {
-      case MODULE_STATUS.ERROR:
-        navigator.clipboard.writeText(error)
-        break;
-      case MODULE_STATUS.READY:
-        chrome.storage.sync.set({
-          moduleStatus: MODULE_STATUS.EXECUTING,
-        })
-        break;
-      default:
-        // reset
-        // todo @ANKU @LOW - нужно включать интервал заново
-        chrome.storage.sync.set({
-          moduleStatus: MODULE_STATUS.NEW,
-          error: undefined,
-        })
-    }
-  })
+  if (currentModuleStatus === MODULE_STATUS.COPY_ANSWERS) {
+    chrome.tabs.sendMessage(tab.id, {
+      action: ACTIONS_CLIENT.COPY_ANSWERS_CLIPBOARD,
+    })
+    // todo @ANKU @LOW - navigator.clipboard пустой даже на https и c пермишеном clipboardWrite
+//     navigator.clipboard.writeText(JSON.stringify(currentTopic, null, 2))
+  } else {
+    chrome.storage.sync.get(({
+      moduleStatus,
+      error,
+    }) => {
+      console.log('bg: action: ', moduleStatus, error)
+      switch (moduleStatus) {
+        case MODULE_STATUS.ERROR:
+          navigator.clipboard.writeText(error)
+          break;
+        case MODULE_STATUS.READY:
+          chrome.storage.sync.set({
+            moduleStatus: MODULE_STATUS.EXECUTING,
+          })
+          break;
+        case MODULE_STATUS.COPY_ANSWERS:
+
+          break;
+        default:
+          // reset
+          // todo @ANKU @LOW - нужно включать интервал заново
+          chrome.storage.sync.set({
+            moduleStatus: MODULE_STATUS.NEW,
+            error: undefined,
+          })
+      }
+    })
+  }
 })
 
 
@@ -160,6 +175,7 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
       error,
     }) => {
       updateBadge(moduleStatus?.newValue || moduleStatus, error?.newValue || error)
+      currentModuleStatus = moduleStatus?.newValue || moduleStatus
     })
   }
 })
@@ -208,6 +224,18 @@ chrome.runtime.onMessage.addListener(function (runtimeMessage, sender, callback)
 
   try {
     switch (action) {
+      case ACTIONS.MODULE_STATUS: {
+        const {
+          moduleStatus,
+          error,
+        } = payload
+
+        updateBadge(moduleStatus, error)
+          .then(() => {
+            currentModuleStatus = moduleStatus
+          })
+        break
+      }
       case ACTIONS.FETCH: {
         const {
           url,

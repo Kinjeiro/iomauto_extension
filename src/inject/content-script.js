@@ -23,7 +23,6 @@ function serializeToSeregaFormat(topic) {
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    console.log('ANKU , request', request)
     const {
       action,
       payload,
@@ -177,9 +176,7 @@ function init() {
         clearInterval(interval) // останавливаем поиск
         stop()
 
-        // todo @ANKU @CRIT @MAIN @debugger -
-        // if (resultRate >= 3) {
-        if (resultRate >= 2) {
+        if (resultRate >= 3) {
           actionUpdateStatus(MODULE_STATUS.COPY_ANSWERS)
         }
       }
