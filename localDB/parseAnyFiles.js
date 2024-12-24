@@ -2,6 +2,7 @@
 // const textract = require('textract')
 // const textract = require('@alexcdot/textract')
 // const aw = require('@aspose/words')
+const { JSDOM } = require("jsdom")
 
 // const officeParser = require('officeparser')
 const officeParser = require('./officeparser/officeParser')
@@ -10,107 +11,29 @@ const fs = require('fs')
 const path = require('path')
 
 const {
-  normalizeTextCompare,
-  latinToViewCyrillic,
-  normalizeTopicId,
-  normalizeTopicTitle,
-} = require('../src/inject/normalize')
-const {
-  modelTopic,
-  modelQuestion,
+  TRUST_LEVEL,
 } = require('../src/constants')
 const {
   log,
   logError,
-  parseFromSingleLineData,
-  logErrorSilent
-} = require('./parseText')
+  logErrorSilent,
+  getDateStr
+} = require('./utils')
 
-// LOCAL - ignore github
-const {
-  DIR_PATHS,
-  EXCLUDES_FILES
-} = require('./files')
-
-console.log('ANKU , DIR_PATHS', DIR_PATHS)
-
-const PARSER_GOOGLE_DOCX_ID = 'googleDocs'
 
 const SUPPORT_EXT = [
   '.doc',
   '.docx',
   '.odt',
+  // todo @ANKU @LOW - еще не тестили
+  '.pdf',
+
+  // кастомные
   '.txt',
+  // todo @ANKU @LOW - добавить формат
+  '.html',
 ]
-let absoluteFiles = DIR_PATHS.reduce((result, dir) => {
-  result.push(
-    ...fs.readdirSync(dir).map((fileName) => {
-      const ext = path.extname(fileName)
-      return (
-        !ext || EXCLUDES_FILES.includes(fileName) || !SUPPORT_EXT.includes(ext)
-          ? undefined
-          : path.join(dir, fileName)
-      )
-    }).sort(),
-  )
-  return result
-}, [])
-  .filter(Boolean)
 
-// todo @ANKU @CRIT @MAIN @debugger -
-// absoluteFiles = ['d:\\__CODE_IOMAUTO__\\ответы от Константина\\диск\\2024г английские а и о\\Аллергический ринит (по утвержденным клиническим рекомендациям).docx']
-console.log('ANKU , absoluteFiles', absoluteFiles)
-
-
-const LOCAL_DB_PATH_DOCS = path.join(__dirname, '../src/bg/files/localBaseDocs.json')
-
-
-function normalizeAnswer(answer) {
-  return latinToViewCyrillic(answer)
-    .replace(/\+?$/g, '') // убираем плюс
-    .replace(/^\d+\)\s/g, '') // убираем первую цифру
-    .replace(/[;.]$/g, '')
-}
-
-function parseFromDocx(fileName, docStrings) {
-  const topicTitle = normalizeTopicTitle(fileName)
-  console.log('Тема: ', topicTitle)
-
-  const docStringsFinal = (
-    // на первом вопросе бывает съедается первая цифра
-    '1. ' + docStrings.replace(/^\s*\d?\.?\s?/, '')
-  )
-    .replace(/\r\n/g, '\n') // убираем txt переходы
-    .replace(/\n\n/g, '\n') // убираем пустые строки
-    .replace(/ /g, ' ') // убираем пробельные символы
-    .replace(/^(\d+)-\s/mg, '$1\) ') // заменяем черту
-    .replace(/^(?!\d+?[.)]\s).*$/mg, '') // убираем рекламу, все что не начинается с цифр и скобок
-
-  // многие документы имеют такой вид
-    /*
-    1. Когнитивные нарушения при болезни Ниманна-Пика тип С характеризируются
-      1) уменьшением скорости обработки информации.+
-      1) снижением словесной памяти.+
-      1) снижением исполнительной функции.+
-   * */
-  const questionsAndAnswers = parseFromSingleLineData(docStringsFinal, true)
-
-  const now = new Date()
-  const topic = modelTopic({
-    id: normalizeTopicId(topicTitle),
-    title: topicTitle,
-    createDate: now,
-    updateDate: now,
-    /*number,
-    question,
-    answers,
-    correctAnswers,*/
-    questions: questionsAndAnswers,
-    from: PARSER_GOOGLE_DOCX_ID,
-  })
-
-  return topic
-}
 
 // function parseFromDocxOld(fileName, docsJson) {
 //   const topicName = latinToViewCyrillic(
@@ -229,7 +152,34 @@ function parseFromDocx(fileName, docStrings) {
 //   })
 // }
 
-async function runParseAllDocxs() {
+function getAbsoluteFiles(dirPaths, excludeFiles = []) {
+  return dirPaths.reduce((result, dir) => {
+    result.push(
+      ...fs.readdirSync(dir).map((fileName) => {
+        const ext = path.extname(fileName)
+        return (
+          !ext || excludeFiles.includes(fileName) || !SUPPORT_EXT.includes(ext)
+            ? undefined
+            : path.join(dir, fileName)
+        )
+      }).sort(),
+    )
+    return result
+  }, [])
+    .filter(Boolean)
+}
+
+async function parseAnyFiles(
+  dirPaths,
+  excludeFiles,
+  formatParser,
+  dbDate = undefined,
+  trustLevel = TRUST_LEVEL.MAX,
+  formatParserHtml = undefined,
+) {
+  let absoluteFiles = getAbsoluteFiles(dirPaths, excludeFiles)
+  console.log('ANKU , absoluteFiles', absoluteFiles)
+
   // Чтение PDF файла
   // let dataBuffer = fs.readFileSync(pdfPath)
 
@@ -319,15 +269,26 @@ async function runParseAllDocxs() {
         const allowedTextTags = ["text:p", "text:h", "text:span"];
     */
     try {
-      const fileStrings = await officeParser.parseOfficeAsync(filePath)
-
-      if (fileStrings.trim().length === 0) {
-        logErrorSilent('Пустой файл', fileName)
+      // todo @ANKU @LOW - html формат
+      let topic
+      if (extension === '.html') {
+        const jsDomEntry = new JSDOM(fs.readFileSync(filePath))
+        topic = formatParserHtml(fileName, jsDomEntry.window.document, trustLevel)
       } else {
-        const topic = parseFromDocx(fileName, fileStrings)
-        log(topic.questions.length)
-        result.push(topic)
+        const fileStrings = await officeParser.parseOfficeAsync(filePath)
+
+        if (fileStrings.trim().length === 0) {
+          logErrorSilent('Пустой файл', fileName)
+          continue
+        } else {
+          // const topic = parseFromDocx(fileName, fileStrings)
+          topic = formatParser(fileName, fileStrings, trustLevel)
+        }
       }
+
+      topic.createDate = dbDate
+      log(topic.questions.length)
+      result.push(topic)
     } catch (e) {
       if (
            e.message.indexOf("[OfficeParser]: Error: end of central directory record signature not found") === 0
@@ -356,13 +317,22 @@ async function runParseAllDocxs() {
     //   const topic = parseFromDocx(file, topicJson)
     //   result.push(topic)
     // }
-
   }
 
   debugger
-  fs.writeFileSync(LOCAL_DB_PATH_DOCS, JSON.stringify(result, null, 2), 'utf-8')
+  const dbJsonPath = path.join(__dirname, `../src/bg/files/${getDateStr(dbDate)} ${result[0].from}.json`)
+  fs.writeFileSync(dbJsonPath, JSON.stringify(result, null, 2), 'utf-8')
 
   fs.writeFileSync(path.join(__dirname, './incorrectNames.txt'), resultIncorrectName.join('\n'))
 }
 
-runParseAllDocxs()
+module.exports = {
+  parseAnyFiles,
+}
+
+
+// todo @ANKU @CRIT @MAIN - мержить
+// todo @ANKU @CRIT @MAIN - по нажатию делать json и копировать в буффер
+
+
+

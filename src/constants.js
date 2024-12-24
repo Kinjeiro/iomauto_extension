@@ -75,21 +75,46 @@ function modelQuestion({
   }
 }
 
+
+const TRUST_LEVEL = {
+  MINIMUM: 0,
+  LOW: 10,
+  NORMAL: 20,
+  HIGH: 30,
+  MAX: 50,
+}
+
+// const RATE = {
+//   RATE_1: 1,
+//   RATE_2: 2,
+//   RATE_3: 3,
+//   RATE_4: 4,
+//   RATE_5: 5,
+// }
 function modelTopic({
   id,
   title,
-  createDate,
-  updateDate,
   questions,
-  from,
+  from, // parser ids
+
+  createDate = new Date(),
+  // updateDate = createDate,
+
+  trustLevel = TRUST_LEVEL.MAX,
+  answersCount = Object.keys(questions).length,
+  answersCorrect = answersCount,
+  // rate = RATE.RATE_5,
 }) {
   return {
     id,
     title,
     createDate,
-    updateDate,
+    // updateDate,
     questions,
     from,
+    trustLevel,
+    answersCount,
+    answersCorrect,
   }
 }
 
@@ -104,4 +129,6 @@ module.exports = {
   IS_DEBUG,
   modelQuestion,
   modelTopic,
+  TRUST_LEVEL,
+  RATE,
 }
