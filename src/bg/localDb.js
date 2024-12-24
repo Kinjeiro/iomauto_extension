@@ -11,8 +11,10 @@ async function initDatabase() {
   // todo @ANKU @CRIT @MAIN - подумать как лучше обновлять базу
   // const records = localBaseArray.map(modelTopic)
   const records = [
-    ...require('./files/localBasePdfs.json'),
-    ...require('./files/localBaseDocs.json')
+    ...require('./files/2024-12-23 resultPageTxt.json'),
+    ...require('./files/2024-12-09 pdfOld.json'),
+    ...require('./files/2024-12-19 KostyaDocs.json'),
+    ...require('./files/2024-12-23 KostyaDocs.json'),
   ]
 
   // console.log('ANKU , records', records.sort((a, b) => a.id > b.id))
