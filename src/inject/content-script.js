@@ -18,7 +18,7 @@ function serializeToSeregaFormat(topic) {
   const questionsStr = topic.questions.map((question) =>
     question.question + '\n' + question.answers.map((answer) => '+ ' + answer + '\n').join('') + '\n')
     .join('')
-  return topic.title + '\n\n' + questionsStr
+  return '#ответы\n\n' + topic.title + '\n\n' + questionsStr
 }
 
 chrome.runtime.onMessage.addListener(
