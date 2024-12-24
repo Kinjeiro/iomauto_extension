@@ -113,7 +113,12 @@ export async function searchAnswers2(certName) {
 
     let topicSearchItems
     try {
-      topicSearchItems = await adapter.findTopicItems(certNameNormalized)
+      topicSearchItems = await adapter.findTopicItems(
+        certNameNormalized
+          .substring(0, 140) // при длинных названиях может глючить их поиск
+          // обрезаем последнее слово, так как оно может быть неполным
+          .replaceAll(/\s([^\s]*)$/gi, ''),
+      )
     } catch (e) {
       logError(adapterLogPrefix, e)
       topicSearchItems = []
