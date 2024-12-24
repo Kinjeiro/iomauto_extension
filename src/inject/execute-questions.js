@@ -1,6 +1,6 @@
 import { getConfig, MODULE_STATUS } from '../constants'
 import { normalizeTextCompare } from './normalize'
-import { getRandomInt, IOMError, log, logError, logErrorNotification } from './utils'
+import { getRandomInt, IOMError, log, logError, logErrorNotification, logWarn } from './utils'
 
 
 function compareText(inputDataStr, pageStr) {
@@ -59,7 +59,7 @@ export function startExecute(mapResult) {
   // const input =  window.prompt('JSON c ответами')
   // const mapResult = JSON.parse(input)
   let mistakePositions = getMistakes(mapResult)
-  const emptyQuestions = []
+  const emptyQuestionsSet = new Set()
 
   // let pageQuestionNumber = 1
   let prevQuestion
@@ -176,14 +176,18 @@ export function startExecute(mapResult) {
           )
         })
       }
-    } else {
-      // обнуляем ошибки, если вариант не найден
-      mistakePositions = []
-      logError('Не найден вопрос в ответах: ' + question, '\n', mapResult)
     }
 
+    let manualContinue = false
     if (!hasAnyAnswer) {
-      emptyQuestions.push(questionNumber)
+      // обнуляем ошибки, если вариант не найден
+      mistakePositions = []
+      // logError('Не найден вопрос в ответах: ' + question, '\n', mapResult)
+      emptyQuestionsSet.add(questionNumber)
+
+      logWarn('НЕ найден ответ на вопрос', question, findAnswers)
+      manualContinue = true
+
 //       const manualAnswers = prompt(
 //         `НЕ НАЙДЕН ответ на вопрос:
 // "${question}"
@@ -213,11 +217,7 @@ export function startExecute(mapResult) {
 //       }
     }
 
-    if (!hasAnyAnswer) {
-      debugger
-      // throw new IOMError('НЕ найден ответ на вопрос. ВЫБЕРИТЕ ответы сами', question, findAnswers)
-      logError('НЕ найден ответ на вопрос', question, findAnswers)
-    } else {
+    if (hasAnyAnswer || manualContinue) {
       // ЖМЕМ кнопку ДАЛЬШЕ
 
       //const buttonApplyEl = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-actions > div > button.question-buttons-primary.mdc-button.mdc-button--raised.mat-mdc-raised-button.mat-primary.mat-mdc-button-base.ng-star-inserted')
@@ -226,7 +226,7 @@ export function startExecute(mapResult) {
       if (buttonApplyEl.textContent === 'Завершить тестирование') {
         log('КОНЕЦ. ПРОЙДЕНО ' + questionNumber + 'ответов.')
 
-        if (emptyQuestions.length > 0) {
+        if (emptyQuestionsSet.size > 0) {
           const expandEl = document.querySelector('.expansion-panel-custom_toggle-title')
           if (expandEl) {
             expandEl.click()
@@ -235,7 +235,7 @@ export function startExecute(mapResult) {
           setTimeout(() => {
             alert(
               `ВНИМАНИЕ! НЕ НАЙДЕНЫ ОТВЕТЫ на вопросы
-${emptyQuestions.join(',')}
+${[...emptyQuestionsSet].join(', ')}
 
 Они остались ПУСТЫМИ. Пожалуйста, вручную заполните ответы
 Либо поищите в поиске чата https://t.me/iomauto`

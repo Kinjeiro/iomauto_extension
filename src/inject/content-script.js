@@ -115,8 +115,10 @@ function stop() {
 }
 
 function getResultRate() {
-  // const el = document.querySelector('.quiz-questionsList-title')
-  const el = document.querySelector('.quiz-info-col-indicators-item:nth-child(2) .text_value')
+  const protocolEl = document.querySelector('.quiz-questionsList-title')
+  const el = protocolEl
+    ? document.querySelector('.quiz-info-col-indicators-item:nth-child(2) .text_value')
+    : undefined
   return el ? parseInt(el.textContent, 10) : undefined
 }
 

@@ -10,6 +10,10 @@ export function logDebug(msg, ...args) {
   }
 }
 
+export function logWarn(msg, ...args) {
+  console.warn(msg, ...args)
+}
+
 export function logError(msg, ...args) {
   console.error(msg, ...args)
 }
