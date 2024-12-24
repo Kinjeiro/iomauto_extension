@@ -139,6 +139,7 @@ async function runSearchAnswers() {
     finalMapResult = await searchAnswers2(certName)
 
     if (Object.keys(finalMapResult).length < 10) {
+      window.noSomeAnswers = true
       alert('НЕ НАЙДЕНЫ ответы для темы\n Спросите в группе\nhttps://t.me/iomauto\nможет кто-то уже решал.')
       throw Error('Не найдены ответы для темы')
     }
@@ -178,6 +179,9 @@ function init() {
         clearInterval(interval) // останавливаем поиск
         stop()
 
+        // todo @ANKU @LOW - подумать давать ли опцию всем или только если нет каких-нибудь ответов
+        // if (resultRate >= 3 && window.noSomeAnswers) {
+        log('resultRate', resultRate, window.noSomeAnswers)
         if (resultRate >= 3) {
           actionUpdateStatus(MODULE_STATUS.COPY_ANSWERS)
         }

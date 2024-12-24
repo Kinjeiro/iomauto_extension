@@ -52,6 +52,7 @@ function getMistakes(mapResult) {
   return mistakePositions
 }
 
+
 export function startExecute(mapResult) {
   const allKeys = Object.keys(mapResult)
 
@@ -60,6 +61,7 @@ export function startExecute(mapResult) {
   // const mapResult = JSON.parse(input)
   let mistakePositions = getMistakes(mapResult)
   const emptyQuestionsSet = new Set()
+  window.noSomeAnswers = false
 
   // let pageQuestionNumber = 1
   let prevQuestion
@@ -87,7 +89,14 @@ export function startExecute(mapResult) {
       // заголовок - функция на ссылку на span
     }
 
-    const foundKey = allKeys.find((key) => compareText(key, question))
+    let foundKey = allKeys.find((key) => compareText(key, question))
+    foundKey = foundKey || allKeys.find((key) =>
+      // попробуем поискать на меньшом кол-ве символов
+      compareText(
+        key.substring(0, 130),
+        question.substring(0, 130),
+      ))
+
     if (foundKey) {
       findAnswers = mapResult[foundKey]
       // console.log('Найдены ответы: ', findAnswers)
@@ -184,6 +193,7 @@ export function startExecute(mapResult) {
       mistakePositions = []
       // logError('Не найден вопрос в ответах: ' + question, '\n', mapResult)
       emptyQuestionsSet.add(questionNumber)
+      window.noSomeAnswers = true
 
       logWarn('НЕ найден ответ на вопрос', question, findAnswers)
       manualContinue = true
