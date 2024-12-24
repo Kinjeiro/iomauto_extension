@@ -130,5 +130,5 @@ module.exports = {
   modelQuestion,
   modelTopic,
   TRUST_LEVEL,
-  RATE,
+  // RATE,
 }

@@ -1,5 +1,5 @@
 import { normalizeAnswer, normalizeQuestion } from '../normalize'
-import { transliterateForNmoTestOnline } from '../transliterateForNmoTestOnline'
+import { transliterateForNmoTestOnline } from './transliterateForNmoTestOnline'
 import { getHtmlDocument } from '../utils'
 
 import { modelSearchAdapter, modelTopicSearchItem } from './models'
