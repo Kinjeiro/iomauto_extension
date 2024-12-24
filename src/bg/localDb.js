@@ -29,10 +29,10 @@ async function initDatabase() {
   await insertRecords(records)
 
   // todo @ANKU @CRIT @MAIN @debugger -
-  const allTopics = await promiseForRequest(getStore().getAll())
-  console.log('ВСЕ ТЕМЫ')
-  // console.log(allTopics.map((topic) => `${topic.id} [${topic.questions.length}] \t\t\t ${topic.title}`).join('\n'))
-  console.log(allTopics.map((topic) => `${topic.title} [${topic.questions.length}]`).join('\n'))
+  // const allTopics = await promiseForRequest(getStore().getAll())
+  // console.log('ВСЕ ТЕМЫ')
+  // // console.log(allTopics.map((topic) => `${topic.id} [${topic.questions.length}] \t\t\t ${topic.title}`).join('\n'))
+  // console.log(allTopics.map((topic) => `${topic.title} [${topic.questions.length}]`).join('\n'))
 }
 
 // todo @ANKU @LOW - обернуть для удобства
