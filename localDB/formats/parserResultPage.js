@@ -25,16 +25,24 @@ function parseFormatResultPage(fileName, strings, trustLevel) {
   // const answersCorrect = parseInt(resultPageMatch[1], 10)
   // const rate = parseInt(resultPageMatch[2], 10)
   const questionsBlock = (resultPageMatch[3]
+    .replace(/(^\d+\s*?\n)*(?=(Вернуться|Протокол))/mg, '') // убираем 1\n\2\n
+    .replace(/流 НМО Решатель(\n|.)*?без изменений\n/mg, '')
     .replace('Вернуться к обучению', '')
     .replace(/^https:.*?$/gm, '') // https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/...
     .replace(/^\d{2}\.\d{2}\.\d{4}.*?$/gm, '') // 11.12.2024, 21:10Тестирование НМИФО
-    + '\n0') // для удобного парсинга
+    + '\n0'
+  ) // для удобного парсинга
     .replace(/^\s*$/gm, '')
     .replace(/\n\n/gm, '\n')
+    // меняем местами, если из-за разрыва страницы Верно было выше этого пункта
+    .replace(/^(Верно\n|Не верно\n|Ответ не дан\n)((\n|.)*?)(?=^\d+\s*?\n)/gm, '$2$1') // поменем местами и поставим в конец
+    .replace(/^(Ответ не дан\n)/gm, 'OPA\n$1') // добавим строку для правильного парсинга
+    .replace(/^(Требовалось выбрать НЕСКОЛЬКО правильных ответов\n)/gm, '$1 \n') // добавим строку для правильного парсинга
 
   // const questionsRegexp = /^(\d+)\n((.|\n)*?)(Требовалось выбрать НЕСКОЛЬКО правильных ответов\n((\n|.)*?))?\n(.*?)\n(.*?)\n(?=^(\d+)$)/gm
   // const questionsRegexp = /^(\d{1,2})\s?\n((.|\n)*?)(Требовалось выбрать НЕСКОЛЬКО правильных ответов\n((\n|.)*?))?(.*?)\n(Верно|Не верно)\s?\n/gm
-  const questionsRegexp = /^(\d{1,2})\s?\n((.|\n)*?)(Требовалось выбрать НЕСКОЛЬКО правильных ответов\n((\n|.)*?))?\n(.*?)\n(.*?)\n(?=^\d+\s?$)/gm
+  // const questionsRegexp = /^(\d{1,2})\s?\n((.|\n)*?)(Требовалось выбрать НЕСКОЛЬКО правильных ответов((\n|.)*?))?\n(.*?)\n(.*?)\n(?=^\d+\s?$)/gm
+  const questionsRegexp = /^(\d{1,2})\s?\n((.|\n)*?)(Требовалось выбрать НЕСКОЛЬКО правильных ответов((\n|.)+?))?\n(.*?)\n(Верно|Не верно|Ответ не дан)\n(?=^\d+\s?$)/gm
   // добавить \n0 чтобы поиск работал
 
   let questions = []
@@ -56,14 +64,18 @@ function parseFormatResultPage(fileName, strings, trustLevel) {
       ...(questionMatch[5] || '').split('\n'),
       questionMatch[7],
       questionMatch[8],
-    ].forEach((line) => {
-      if (line.trim() === 'Верно') {
+    ]
+    lines.forEach((line) => {
+      const lineStr = line.trim()
+      if (lineStr === 'Верно') {
         isCorrect = true
         answersCorrect++
-      } else if (line.trim() === 'Не верно') {
+      } else if (lineStr === 'Не верно') {
         isCorrect = false
-      } else if (line) {
-        answers.push(normalizeAnswer(line))
+      } else if (lineStr === 'Ответ не дан') {
+        isCorrect = false
+      } else if (lineStr) {
+        answers.push(normalizeAnswer(lineStr))
       }
     })
     if (typeof isCorrect === 'undefined') {
@@ -79,7 +91,7 @@ function parseFormatResultPage(fileName, strings, trustLevel) {
     questions.push(modelQuestion({
       number: questionNumber,
       question,
-      correctAnswers: isCorrect ? answers : [],
+      answers: isCorrect ? answers : [],
       // todo @ANKU @LOW - можно потом добавить wrongAnswers
     }))
 

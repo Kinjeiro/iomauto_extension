@@ -77,8 +77,7 @@ function parse24ForcareQuestions(questionsBlock, ignoreAnswerNumber = false) {
     questionsAndAnswers.push(modelQuestion({
       number: questionNumber,
       question,
-      // answers,
-      correctAnswers,
+      answers: correctAnswers,
     }))
   }
 

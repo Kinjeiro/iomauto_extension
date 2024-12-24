@@ -1,5 +1,6 @@
+import { parseFormatResultPageHtml } from './parserResultPageHtml'
 import { IOMError, log } from './utils'
-import { getConfig, MODULE_STATUS, updateConfig } from '../constants'
+import { ACTIONS, ACTIONS_CLIENT, getConfig, MODULE_STATUS, TRUST_LEVEL, updateConfig } from '../constants'
 import { startExecute } from './execute-questions'
 import { searchAnswers2 } from './search-answers'
 
@@ -9,6 +10,65 @@ import './content-script.css'
 log('Start from content-scripts')
 
 // const normalizeTextCompare = globalThis.normalizeTextCompare
+
+
+let currentModuleStatus = undefined
+
+function serializeToSeregaFormat(topic) {
+  const questionsStr = topic.questions.map((question) =>
+    question.question + '\n' + question.answers.map((answer) => '+ ' + answer + '\n').join('') + '\n')
+    .join('')
+  return topic.title + '\n\n' + questionsStr
+}
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    console.log('ANKU , request', request)
+    const {
+      action,
+      payload,
+    } = request
+
+    switch (action) {
+      case ACTIONS_CLIENT.COPY_ANSWERS_CLIPBOARD: {
+        const topic = parseFormatResultPageHtml(undefined, document, TRUST_LEVEL.LOW, true)
+
+        navigator.clipboard.writeText(
+          serializeToSeregaFormat(topic),
+        )
+          .then(function() {
+            // нужно дождаться окончания копирования, чтобы не терялся фокус
+            alert(
+              `Ответы СКОПИРОВАНЫ в буффер обмена
+Пожалуйста, зайдите в чат группы
+https://t.me/iomauto
+наведи фокус на ввод сообщения и нажмите CTRL+V
+
+Этим Вы поможете другим. Спасибо!`
+            )
+          })
+        break
+      }
+    }
+    // console.log(sender.tab ?
+    //   "from a content script:" + sender.tab.url :
+    //   "from the extension");
+    // if (request.greeting === "hello")
+    //   sendResponse({farewell: "goodbye"});
+  }
+)
+function actionUpdateStatus(moduleStatus, error, data) {
+  currentModuleStatus = moduleStatus
+
+  chrome.runtime.sendMessage({
+    action: ACTIONS.MODULE_STATUS,
+    payload: {
+      moduleStatus,
+      error,
+      data,
+    },
+  })
+}
 
 
 async function searchByCertName() {
@@ -50,8 +110,23 @@ async function runSearchQAForm() {
 }
 
 let intervalRunSearchAnswers
+function stop() {
+  clearInterval(intervalRunSearchAnswers)
+  clearInterval(intervalRunSearchQAForm)
+}
+
+function getResultRate() {
+  // const el = document.querySelector('.quiz-questionsList-title')
+  const el = document.querySelector('.quiz-info-col-indicators-item:nth-child(2) .text_value')
+  return el ? parseInt(el.textContent, 10) : undefined
+}
+
 let finalMapResult
 async function runSearchAnswers() {
+  if (getResultRate()) {
+    return
+  }
+
   const certName = await searchByCertName()
   if (certName) {
     clearInterval(intervalRunSearchAnswers)
@@ -73,6 +148,9 @@ async function runSearchAnswers() {
   }
 }
 
+
+
+
 function init() {
   log('init')
 
@@ -91,6 +169,24 @@ function init() {
         error: undefined,
       })
     }, 500)
+
+    let interval
+    function checkResultPage() {
+      const resultRate = getResultRate()
+      if (resultRate) {
+        clearInterval(interval) // останавливаем поиск
+        stop()
+
+        // todo @ANKU @CRIT @MAIN @debugger -
+        // if (resultRate >= 3) {
+        if (resultRate >= 2) {
+          actionUpdateStatus(MODULE_STATUS.COPY_ANSWERS)
+        }
+      }
+    }
+    checkResultPage() // запускаем сразу
+    interval = setInterval(checkResultPage, 1000)
+
   } else {
     // если background еще не готов РЕКУРСИВНО подождем еще
     setTimeout(init, 1000)
@@ -120,14 +216,12 @@ window.onload = function() {
 //   return false
 // }
 
+
 function errorWrapper(func) {
   return async () => {
     try {
       return await func()
     } catch (e) {
-      clearInterval(intervalRunSearchAnswers)
-      clearInterval(intervalRunSearchQAForm)
-
       log('ОШИБКА ЗАПУСКА:\n', e)
       chrome.storage.sync.set({
         moduleStatus: MODULE_STATUS.ERROR,
@@ -192,8 +286,6 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
         })
 
 
-
-
         log('Подстановка значений...')
         startExecute(finalMapResult)
 
@@ -201,3 +293,4 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
     }
   })()
 })
+

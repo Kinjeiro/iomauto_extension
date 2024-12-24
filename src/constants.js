@@ -44,6 +44,7 @@ const IS_DEBUG = true
 // }
 
 const ACTIONS = {
+  MODULE_STATUS: 'MODULE_STATUS',
   FETCH: 'FETCH',
 
   LOCAL_DB_SEARCH_TOPICS: 'LOCAL_DB_SEARCH_TOPICS',
@@ -66,12 +67,13 @@ const ACTIONS = {
 function modelQuestion({
   number,
   question,
-  correctAnswers,
+  answers,
 }) {
   return {
     number,
     question,
-    correctAnswers,
+    // correctAnswers,
+    answers,
   }
 }
 

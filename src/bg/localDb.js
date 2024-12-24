@@ -11,10 +11,11 @@ async function initDatabase() {
   // todo @ANKU @CRIT @MAIN - подумать как лучше обновлять базу
   // const records = localBaseArray.map(modelTopic)
   const records = [
-    ...require('./files/2024-12-23 resultPageTxt.json'),
-    ...require('./files/2024-12-09 pdfOld.json'),
-    ...require('./files/2024-12-19 KostyaDocs.json'),
-    ...require('./files/2024-12-23 KostyaDocs.json'),
+    ...require('./files/2024-12-24 resultPageTxt.json'),
+    ...require('./files/2024-12-24 resultSeregiTxt.json'),
+    ...require('./files/2024-12-10 pdfOld.json'),
+    ...require('./files/2024-12-20 KostyaDocs.json'),
+    ...require('./files/2024-12-24 KostyaDocs.json'),
   ]
 
   // console.log('ANKU , records', records.sort((a, b) => a.id > b.id))
@@ -28,10 +29,10 @@ async function initDatabase() {
   await insertRecords(records)
 
   // todo @ANKU @CRIT @MAIN @debugger -
-  // const allTopics = await promiseForRequest(getStore().getAll())
-  // console.log('ВСЕ ТЕМЫ')
-  // // console.log(allTopics.map((topic) => `${topic.id} [${topic.questions.length}] \t\t\t ${topic.title}`).join('\n'))
-  // console.log(allTopics.map((topic) => `${topic.title} [${topic.questions.length}]`).join('\n'))
+  const allTopics = await promiseForRequest(getStore().getAll())
+  console.log('ВСЕ ТЕМЫ')
+  // console.log(allTopics.map((topic) => `${topic.id} [${topic.questions.length}] \t\t\t ${topic.title}`).join('\n'))
+  console.log(allTopics.map((topic) => `${topic.title} [${topic.questions.length}]`).join('\n'))
 }
 
 // todo @ANKU @LOW - обернуть для удобства
@@ -107,7 +108,7 @@ async function insertRecords(records, silent) {
     try {
       if (record.questions.length > 0) {
         await promiseForRequest(store.put(record))
-        console.log("+ ", record.questions.length, record.title)
+        // console.log("+ ", record.questions.length, record.title)
       }
     } catch (e) {
       if (!silent) {

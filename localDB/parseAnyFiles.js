@@ -177,8 +177,13 @@ async function parseAnyFiles(
   trustLevel = TRUST_LEVEL.MAX,
   formatParserHtml = undefined,
 ) {
+  log(dirPaths, '\n')
   let absoluteFiles = getAbsoluteFiles(dirPaths, excludeFiles)
-  console.log('ANKU , absoluteFiles', absoluteFiles)
+
+  if (absoluteFiles.length === 0) {
+    log('-- нету файлов --')
+    return
+  }
 
   // Чтение PDF файла
   // let dataBuffer = fs.readFileSync(pdfPath)

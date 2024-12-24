@@ -59,7 +59,7 @@ export const ADAPTER_INDEX_DB = modelSearchAdapter({
       const question = modelQuestion(questionItem)
       // бывает одинаковые вопросы и разные ответы, поэтому сделали массив массивов
       // resultMap[question.question] = question.correctAnswers
-      resultMap[question.question] = question.correctAnswers
+      resultMap[question.question] = question.answers
       return resultMap
     }, {})
   }

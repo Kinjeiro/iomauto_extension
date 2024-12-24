@@ -7,16 +7,42 @@ const {
   parseFormat24ForcareKostyaDocs,
   parseFormat24ForcarePdfOld
 } = require('./formats/parser24forcate')
-const { parseFormatResultPageHtml } = require('./formats/parserResultPageHtml')
+const { parseFormatResultPageHtml } = require('../src/inject/parserResultPageHtml')
 const { parseAnyFiles } = require('./parseAnyFiles')
+const { parseFormatSeregiTxt } = require('./formats/parserSeregiTxt')
 
+function createDate(year, month, day) {
+  return new Date(year, month - 1, day + 1)
+}
 
 async function runParseAll() {
+  await parseAnyFiles(
+    [
+      // path.join(__dirname, '../../ответы - из чата/формат Результаты/test'),
+      path.join(__dirname, '../../ответы - из чата/формат Результаты/')
+    ],
+    undefined,
+    parseFormatResultPage,
+    createDate(2024, 12, 24),
+    TRUST_LEVEL.LOW,
+    parseFormatResultPageHtml,
+  )
+
+  await parseAnyFiles(
+    [
+      path.join(__dirname, '../../ответы - из чата/формат Сереги/'),
+    ],
+    undefined,
+    parseFormatSeregiTxt,
+    createDate(2024, 12, 24),
+  )
+
+
   await parseAnyFiles(
     [path.join(__dirname, '../../ответы - pdf')],
     undefined,
     parseFormat24ForcarePdfOld,
-    new Date(2024, 12-1, 10)
+    createDate(2024, 12, 10),
   )
 
   await parseAnyFiles(
@@ -31,23 +57,14 @@ async function runParseAll() {
       'myans.txt',
     ],
     parseFormat24ForcareKostyaDocs,
-    new Date(2024, 12-1, 20)
+    createDate(2024, 12, 20),
   )
 
   await parseAnyFiles(
     [path.join(__dirname, '../../ответы от Константина/диск/дополнение от 23.12/')],
     undefined,
     parseFormat24ForcareKostyaDocs,
-    new Date(2024, 12-1, 24)
-  )
-
-  await parseAnyFiles(
-    [path.join(__dirname, '../../ответы - из чата/формат Результаты/')],
-    undefined,
-    parseFormatResultPage,
-    new Date(2024, 12-1, 24),
-    TRUST_LEVEL.LOW,
-    parseFormatResultPageHtml,
+    createDate(2024, 12, 24),
   )
 }
 
