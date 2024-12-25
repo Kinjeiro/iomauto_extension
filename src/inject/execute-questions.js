@@ -187,7 +187,7 @@ export function startExecute(mapResult) {
       }
     }
 
-    let manualContinue = false
+    let notFoundError = false
     if (!hasAnyAnswer) {
       // обнуляем ошибки, если вариант не найден
       mistakePositions = []
@@ -196,7 +196,7 @@ export function startExecute(mapResult) {
       window.noSomeAnswers = true
 
       logWarn('НЕ найден ответ на вопрос', question, findAnswers)
-      manualContinue = true
+      notFoundError = true
 
 //       const manualAnswers = prompt(
 //         `НЕ НАЙДЕН ответ на вопрос:
@@ -227,7 +227,7 @@ export function startExecute(mapResult) {
 //       }
     }
 
-    if (hasAnyAnswer || manualContinue) {
+    if (hasAnyAnswer || notFoundError) {
       // ЖМЕМ кнопку ДАЛЬШЕ
 
       //const buttonApplyEl = document.querySelector('#questionAnchor > div > lib-question > mat-card > div > mat-card-actions > div > button.question-buttons-primary.mdc-button.mdc-button--raised.mat-mdc-raised-button.mat-primary.mat-mdc-button-base.ng-star-inserted')
@@ -292,6 +292,11 @@ ${[...emptyQuestionsSet].join(', ')}
           // }
           prevQuestion = question
         }, getRandomInt(1200, 2400))
+
+        if (notFoundError) {
+          // таймаут нажатия кнопки
+          return getRandomInt(2600, 3500)
+        }
       }
     }
 
@@ -301,17 +306,23 @@ ${[...emptyQuestionsSet].join(', ')}
   function checkAnswerWrapper() {
     try {
       const isEnd = checkAnswer()
-      if (!isEnd) {
+      // если ошибка - не нужно ждать
+      const customTimeout = typeof isEnd === 'number'
+        ? isEnd
+        : undefined
+
+      if (customTimeout || isEnd === false) {
         const config = getConfig()
-        // todo @ANKU @LOW - вынеси это в настройки
+
         // запускаем проверку еще раз пока не дойдем до последней кнопки
-        const randomAnswerDelay = getRandomInt(
+        const randomAnswerDelay = customTimeout || getRandomInt(
           config.answerDelayMin,
           config.answerDelayMax,
         )
         log('Задержка ответа:', randomAnswerDelay)
         setTimeout(checkAnswerWrapper, randomAnswerDelay)
       } else {
+        // закончили
         chrome.storage.sync.set({
           moduleStatus: MODULE_STATUS.DONE,
           error: undefined,
