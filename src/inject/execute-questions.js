@@ -89,13 +89,20 @@ export function startExecute(mapResult) {
       // заголовок - функция на ссылку на span
     }
 
-    let foundKey = allKeys.find((key) => compareText(key, question))
-    foundKey = foundKey || allKeys.find((key) =>
+    const MATCHES_ANSWERS = [
+      (str) => str,
+
       // попробуем поискать на меньшом кол-ве символов
-      compareText(
-        key.substring(0, 130),
-        question.substring(0, 130),
-      ))
+      (str) => str.substring(0, 130),
+
+      // // стали заменять со "служит" на "является"
+      // // Витамин-В12-дефицитная анемия (по утвержденным клиническим рекомендациям) - 2024
+      // // Характерным диагностическим признаком В12-дефицитной анемии является
+      // (str) => str.replace(/(является|служит)/g, ''),
+    ]
+    const foundKey = allKeys.find((key) =>
+      MATCHES_ANSWERS.some((matcher) =>
+        compareText(matcher(key), matcher(question))))
 
     if (foundKey) {
       findAnswers = mapResult[foundKey]

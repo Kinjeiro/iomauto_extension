@@ -16,9 +16,9 @@ let currentModuleStatus = undefined
 
 function serializeToSeregaFormat(topic) {
   const questionsStr = topic.questions.map((question) =>
-    question.question + '\n' + question.answers.map((answer) => '+ ' + answer + '\n').join('') + '\n')
-    .join('')
-  return '#ответы\n\n' + topic.title + '\n\n' + questionsStr
+    question.question + '\n' + question.answers.map((answer) => '+ ' + answer + '\n').join('')
+  ).join('')
+  return '#ответы\n' + topic.title + '\n' + questionsStr + '\n'
 }
 
 chrome.runtime.onMessage.addListener(

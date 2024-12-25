@@ -98,7 +98,8 @@ function parseFormatSeregiTxt(fileName, multiTopics, trustLevel) {
   }
   multiTopicsFinal = multiTopicsFinal + '#ответы\n\n' // в конце для поиска
 
-  const topicRegexp = /^#ответы\n\n?((\n|.)+?)(?=#ответы\n\n)/gm
+  // const topicRegexp = /^#ответы\n\n?((\n|.)+?)(?=#ответы\n\n?)/gm
+  const topicRegexp = /^#ответы\n\n?((\n|.)+?)(?=#ответы\n\n?)/gm
 
   const topics = []
 
