@@ -38,10 +38,10 @@ chrome.runtime.onMessage.addListener(
           .then(function() {
             // нужно дождаться окончания копирования, чтобы не терялся фокус
             alert(
-              `Ответы СКОПИРОВАНЫ в буффер обмена
-Пожалуйста, зайдите в чат группы
+              `Ответы СКОПИРОВАНЫ в буффер обмена, положите 
+Пожалуйста, созайте текстовой чат и в нем нажмите CTRL+V. Сохраните файл с названием темы. Потом зайдите в чат группы
 https://t.me/iomauto
-наведи фокус на ввод сообщения и нажмите CTRL+V
+и добавьте файл в чат.
 
 Этим Вы поможете другим. Спасибо!`
             )
@@ -264,7 +264,6 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
           `${config.answerDelayMin/1000}-${config.answerDelayMax/1000}`,
         )
         const [min, max] = answerDelay.replaceAll(/ /g, '').split('-')
-
         const {
           answerDelayMin,
           answerDelayMax,
@@ -279,7 +278,7 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
 
         // ОШИБКИ
         answerDelay = prompt(
-          'Выберите точность ответов (в процентах) \n(для прохождения теста на 3 нужно минимум 85%',
+          'Выберите точность ответов (в процентах) \n(для прохождения теста на 3 нужно минимум 75%',
           `${config.answerPercentMin}-${config.answerPercentMax}`,
         )
         const [answerPercentMin, answerPercentMax] = answerDelay.replaceAll(/ /g, '').split('-')
