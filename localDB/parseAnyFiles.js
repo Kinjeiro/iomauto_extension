@@ -275,10 +275,10 @@ async function parseAnyFiles(
     */
     try {
       // todo @ANKU @LOW - html формат
-      let topic
+      let topics
       if (extension === '.html') {
         const jsDomEntry = new JSDOM(fs.readFileSync(filePath))
-        topic = formatParserHtml(fileName, jsDomEntry.window.document, trustLevel)
+        topics = formatParserHtml(fileName, jsDomEntry.window.document, trustLevel)
       } else {
         const fileStrings = await officeParser.parseOfficeAsync(filePath)
 
@@ -287,13 +287,20 @@ async function parseAnyFiles(
           continue
         } else {
           // const topic = parseFromDocx(fileName, fileStrings)
-          topic = formatParser(fileName, fileStrings, trustLevel)
+          topics = formatParser(fileName, fileStrings, trustLevel)
         }
       }
+      topics = Array.isArray(topics) ? topics : [topics]
 
-      topic.createDate = dbDate
-      log(topic.questions.length)
-      result.push(topic)
+      topics.map((topic) => {
+        topic.createDate = dbDate
+      })
+
+      if (!topics[0]) {
+        debugger
+      }
+      log(topics[0].questions.length)
+      result.push(...topics)
     } catch (e) {
       if (
            e.message.indexOf("[OfficeParser]: Error: end of central directory record signature not found") === 0
@@ -325,7 +332,7 @@ async function parseAnyFiles(
   }
 
   debugger
-  const dbJsonPath = path.join(__dirname, `../src/bg/files/${getDateStr(dbDate)} ${result[0].from}.json`)
+  const dbJsonPath = path.join(__dirname, `../src/bg/files/${getDateStr(dbDate)} ${result[0].from} ${trustLevel}.json`)
   fs.writeFileSync(dbJsonPath, JSON.stringify(result, null, 2), 'utf-8')
 
   fs.writeFileSync(path.join(__dirname, './incorrectNames.txt'), resultIncorrectName.join('\n'))

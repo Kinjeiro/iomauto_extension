@@ -18,54 +18,66 @@ function createDate(year, month, day) {
 async function runParseAll() {
   await parseAnyFiles(
     [
-      // path.join(__dirname, '../../ответы - из чата/формат Результаты/test'),
-      path.join(__dirname, '../../ответы - из чата/формат Результаты/')
+      // path.join(__dirname, '../../ответы - из чата/2024-12-24 -- формат Результаты/')
+      // path.join(__dirname, '../../ответы - из чата/2024-12-25 -- формат Результаты/')
     ],
     undefined,
     parseFormatResultPage,
-    createDate(2024, 12, 24),
+    createDate(2024, 12, 25),
     TRUST_LEVEL.LOW,
     parseFormatResultPageHtml,
   )
 
   await parseAnyFiles(
     [
-      path.join(__dirname, '../../ответы - из чата/формат Сереги/'),
+      // path.join(__dirname, '../../ответы - из чата/2024-12-24 -- формат чат как Сереги/'),
+      path.join(__dirname, '../../ответы - из чата/2024-12-25 -- формат чат как Сереги/test'),
+      path.join(__dirname, '../../ответы - из чата/2024-12-25 -- формат чат как Сереги/'),
     ],
     undefined,
     parseFormatSeregiTxt,
-    createDate(2024, 12, 24),
+    createDate(2024, 12, 25),
+    TRUST_LEVEL.LOW,
   )
 
+  // await parseAnyFiles(
+  //   [
+  //     path.join(__dirname, '../../ответы - из чата/формат Сереги/'),
+  //   ],
+  //   undefined,
+  //   parseFormatSeregiTxt,
+  //   createDate(2024, 12, 24),
+  // )
 
-  await parseAnyFiles(
-    [path.join(__dirname, '../../ответы - pdf')],
-    undefined,
-    parseFormat24ForcarePdfOld,
-    createDate(2024, 12, 10),
-  )
 
-  await parseAnyFiles(
-    [
-      path.join(__dirname, '../../ответы от Константина/диск'),
-      path.join(__dirname, '../../ответы от Константина/диск/2024г английские а и о/'),
-      path.join(__dirname, '../../ответы от Константина/диск/Новая папка (5)/'),
-      path.join(__dirname, '../../ответы от Константина/диск/добавил/'),
-      path.join(__dirname, '../../ответы от Константина/диск/Дополнение ответов/'),
-    ],
-    [
-      'myans.txt',
-    ],
-    parseFormat24ForcareKostyaDocs,
-    createDate(2024, 12, 20),
-  )
+  // await parseAnyFiles(
+  //   [path.join(__dirname, '../../ответы - pdf')],
+  //   undefined,
+  //   parseFormat24ForcarePdfOld,
+  //   createDate(2024, 12, 10),
+  // )
 
-  await parseAnyFiles(
-    [path.join(__dirname, '../../ответы от Константина/диск/дополнение от 23.12/')],
-    undefined,
-    parseFormat24ForcareKostyaDocs,
-    createDate(2024, 12, 24),
-  )
+  // await parseAnyFiles(
+  //   [
+  //     path.join(__dirname, '../../ответы от Константина/диск'),
+  //     path.join(__dirname, '../../ответы от Константина/диск/2024г английские а и о/'),
+  //     path.join(__dirname, '../../ответы от Константина/диск/Новая папка (5)/'),
+  //     path.join(__dirname, '../../ответы от Константина/диск/добавил/'),
+  //     path.join(__dirname, '../../ответы от Константина/диск/Дополнение ответов/'),
+  //   ],
+  //   [
+  //     'myans.txt',
+  //   ],
+  //   parseFormat24ForcareKostyaDocs,
+  //   createDate(2024, 12, 20),
+  // )
+  //
+  // await parseAnyFiles(
+  //   [path.join(__dirname, '../../ответы от Константина/диск/дополнение от 23.12/')],
+  //   undefined,
+  //   parseFormat24ForcareKostyaDocs,
+  //   createDate(2024, 12, 24),
+  // )
 }
 
 runParseAll()

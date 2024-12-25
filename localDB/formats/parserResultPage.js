@@ -24,12 +24,19 @@ function parseFormatResultPage(fileName, strings, trustLevel) {
   const resultPageMatch = resultPageRegexp.exec(strings)
   // const answersCorrect = parseInt(resultPageMatch[1], 10)
   // const rate = parseInt(resultPageMatch[2], 10)
-  const questionsBlock = (resultPageMatch[3]
-    .replace(/(^\d+\s*?\n)*(?=(Вернуться|Протокол))/mg, '') // убираем 1\n\2\n
-    .replace(/流 НМО Решатель(\n|.)*?без изменений\n/mg, '')
-    .replace('Вернуться к обучению', '')
-    .replace(/^https:.*?$/gm, '') // https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/...
-    .replace(/^\d{2}\.\d{2}\.\d{4}.*?$/gm, '') // 11.12.2024, 21:10Тестирование НМИФО
+
+  if (!resultPageMatch) {
+    debugger
+  }
+
+  const questionsBlock = (
+    resultPageMatch[3]
+      .replace(/[	\t]/mg, ' ')
+      .replace(/(^\d+\s*?\n)*(?=(Вернуться|Протокол))/mg, '') // убираем 1\n\2\n
+      .replace(/流 НМО Решатель(\n|.)*?без изменений\n/mg, '')
+      .replace('Вернуться к обучению', '')
+      .replace(/^https:.*?$/gm, '') // https://iomqt-vo.edu.rosminzdrav.ru/quiz-wrapper/...
+      .replace(/^\d{2}\.\d{2}\.\d{4}.*?$/gm, '') // 11.12.2024, 21:10Тестирование НМИФО
     + '\n0'
   ) // для удобного парсинга
     .replace(/^\s*$/gm, '')
