@@ -89,7 +89,7 @@ function normalizeTextCompare(str, withWhitespaces = false) {
     .replace(/\s[\-\–]\s/g, ' ')
     // todo @ANKU @LOW - исправить файлы с "~" в названии
     // \– и \- разные символы
-    .replace(/[~—_\t​]/g, ' ')
+    .replace(/[~—_\t​	]/g, ' ')
     .replace(/[=+!?'"«»,.()\[\]:]/g, '') // убираем спец символы
     .replace(/  /g, ' ') // убираем двойные пустоты
     .replace(/(\S)- /g, '$1-') // убираем лишний пробел
@@ -119,7 +119,7 @@ function normalizeTopicTitle(title) {
     title
       .trim()
       // .replace(/[«»]/g, '')
-      .replace(/^\d+\.?\s*/, '') // убираем номер темы
+      .replace(/^\d+\.?\s+/, '') // убираем номер темы
       .replace(/\s*\(\d+\)$/, ''), // убираем сзади (1)
     true, // cохраняем пробелы
   )

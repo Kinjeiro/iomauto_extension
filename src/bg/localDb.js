@@ -82,7 +82,7 @@ async function start() {
 
 function getStore({
   mode = 'readonly',
-  getRequest,
+  // getRequest,
   onComplete,
   onError,
 } = {}) {
@@ -137,8 +137,6 @@ export function dbGetAllTopics(callback) {
 }
 
 export function dbSearchTopicsByName(prefix, callback) {
-  console.log('ANKU поиск ', prefix)
-
 
   // todo @ANKU @CRIT @MAIN -
   // // Hold reference to the cursor request, since its `success` event is triggered when we iterate through the cursor
@@ -151,32 +149,37 @@ export function dbSearchTopicsByName(prefix, callback) {
   //   await promiseForRequest(cursorReq);
   // }
 
-
-
-  const storeTitleIndex = getStore().index(DB_INDEXES.title)
+  const storeTitleIndex = getStore({
+    // onComplete: () => {
+    //   console.log('ANKU ответ ', result)
+    //   // закончили поиск - отправляем
+    //   callback(result)
+    // },
+  }).index(DB_INDEXES.title)
   // const storeIndex = getStore()
 
   // Определяем диапазон ключей: от prefix до prefix + '\uffff'
 
   // так как мы ищем по id нужно нормализовать
   // const keyRange = IDBKeyRange.bound(prefix, prefix + '\uffff', false, true)
+
+  const titlePart = normalizeTopicTitle(prefix)
+  console.log('Поиск ', titlePart)
   const keyRange = IDBKeyRange.bound(
-    normalizeTopicTitle(prefix),
-    prefix + '\uffff',
-    false,
-    true,
+    titlePart,
+    titlePart + '\uffff',
+    // true,
+    // true,
   )
   const request = storeTitleIndex.openCursor(keyRange)
-
 
   const result = []
   request.onsuccess = function(event) {
     const cursor = event.target.result
 
-    // console.log('ANKU , cursor', cursor)
     if (cursor) {
       const record = modelTopic(cursor.value)
-      console.log(`${cursor.key}: ${record.title}`);
+      console.log(`Найдено: ${record.title} (${record.key})`);
       result.push(cursor.value)
       // Переход к следующему элементу - request.onsuccess
       cursor.continue();
