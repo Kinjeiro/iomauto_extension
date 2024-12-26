@@ -30,7 +30,6 @@ async function runParseAll() {
 
   await parseAnyFiles(
     [
-      // path.join(__dirname, '../../ответы - из чата/2024-12-24 -- формат чат как Сереги/'),
       path.join(__dirname, '../../ответы - из чата/2024-12-25 -- формат чат как Сереги/test'),
       path.join(__dirname, '../../ответы - из чата/2024-12-25 -- формат чат как Сереги/'),
     ],

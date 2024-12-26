@@ -25,7 +25,10 @@ function parseFormatSeregiTxtSingle(fileName, strings, trustLevel, canBeEmpty) {
   const topicTitle = normalizeTopicTitle(globalMatch[1])
   console.log('Тема: ', topicTitle)
 
-  const questionsBlock = globalMatch[3] + '\n ' // для поиска
+  const questionsBlock = globalMatch[3]
+      .replace(/(^[А-ЯA-Z0-9].*)\n([^А-ЯA-Z+\-].+\n)/gm, '$1 $2') // склеим следующю строчку для pdf
+      .replace(/(^[+-].*)\n([^А-ЯA-Z+\-].+\n)/gm, '$1 $2') // склеим их
+    + '\n ' // для поиска
 
   // (.*\n)((^\+.*?\n)*)(\n\n)?(?=[^+])
   const questionsRegexp = /(.+\n)((^[+-].*?\n)*)\n?(?=[^\n])/gm
@@ -70,6 +73,11 @@ function parseFormatSeregiTxtSingle(fileName, strings, trustLevel, canBeEmpty) {
     questionNumber++
   }
 
+  if (topicTitle === '#������') {
+    // когда w1251 а не utf-8 в файле
+    debugger
+  }
+
   const topic = modelTopic({
     id: normalizeTopicId(topicTitle),
     title: topicTitle,
@@ -96,7 +104,7 @@ function parseFormatSeregiTxt(fileName, multiTopics, trustLevel) {
   if (multiTopicsFinal.indexOf('#ответы') < 0) {
     multiTopicsFinal = '#ответы\n\n' + multiTopicsFinal
   }
-  multiTopicsFinal = multiTopicsFinal + '#ответы\n\n' // в конце для поиска
+  multiTopicsFinal = multiTopicsFinal + '#ответы\n' // в конце для поиска
 
   // const topicRegexp = /^#ответы\n\n?((\n|.)+?)(?=#ответы\n\n?)/gm
   const topicRegexp = /^#ответы\n\n?((\n|.)+?)(?=#ответы\n\n?)/gm

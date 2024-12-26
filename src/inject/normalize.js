@@ -132,6 +132,7 @@ function normalizeQuestion(question) {
     .trim()
     .replace(/[«»]/g, '')
     .replaceAll(/^\d+\.\s*/g, '')
+    .replace(/(\d) %/g, '$1%')  // 40 % - соединяем
     .trim()
 }
 
@@ -143,6 +144,7 @@ function normalizeAnswer(answer) {
     .replaceAll(/^"/g, '')
     .replaceAll(/^\d+\) /g, '')
     .replaceAll(/[.;+"]+$/g, '')
+    .replace(/(\d) %/g, '$1%')  // 40 % - соединяем
     .trim()
 }
 

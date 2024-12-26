@@ -95,6 +95,13 @@ export function startExecute(mapResult) {
       // попробуем поискать на меньшом кол-ве символов
       (str) => str.substring(0, 130),
 
+      //  эмфизема легких по утвержденным клиническим рекомендациям
+      // Проведение хирургического уменьшения объема легких (ХУОЛ) у пациентов с эмфиземой показано при
+      (str) => str.replace(/(менее|<|болле|>)/g, ''),
+      (str) => str.replace(/(боллеe|>)/g, ''),
+
+
+
       // // стали заменять со "служит" на "является"
       // // Витамин-В12-дефицитная анемия (по утвержденным клиническим рекомендациям) - 2024
       // // Характерным диагностическим признаком В12-дефицитной анемии является
@@ -102,7 +109,12 @@ export function startExecute(mapResult) {
     ]
     const foundKey = allKeys.find((key) =>
       MATCHES_ANSWERS.some((matcher) =>
-        compareText(matcher(key), matcher(question))))
+        compareText(
+          matcher(
+            key
+          ),
+          matcher(question)),
+      ))
 
     if (foundKey) {
       findAnswers = mapResult[foundKey]
